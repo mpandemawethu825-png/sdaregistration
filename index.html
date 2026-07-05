@@ -3,129 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Offline-First Event Registration System for the Cape Conference of Seventh-day Adventists">
-    <title>Cape Conference | Ticket & Registration System</title>
+    <title>Cape Conference | Advanced Ticketing Pro</title>
     
-    <!-- =========================================
-       EXTERNAL LIBRARIES & CDNs
-       ========================================= -->
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS for Excel Exports -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- jsPDF for Native PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- EmailJS for Email API Integration -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         /* =========================================
-           SDA CAPE CONFERENCE BRANDING & THEMING
+           CAPE CONFERENCE ENTERPRISE THEMING
            ========================================= */
         :root {
-            --primary: #004b87; /* Official SDA Blue */
+            --primary: #004b87; 
             --secondary: #0060ad;
-            --accent: #f2a900; /* SDA Gold/Yellow */
-            --bg-color: #f4f7f9;
+            --accent: #f2a900; 
+            --bg-color: #f0f4f8;
             --text-color: #2c3e50;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --glass-border: rgba(0, 75, 135, 0.15);
-            --glass-shadow: 0 8px 30px 0 rgba(0, 75, 135, 0.08);
-            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --glass-border: rgba(0, 75, 135, 0.1);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --sidebar-bg: #003a6c;
             --success: #27ae60;
-            --danger: #c0392b;
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --warning: #f39c12;
+            --transition: all 0.25s ease-in-out;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; overflow: hidden; }
         
-        .glass {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            box-shadow: var(--glass-shadow);
-        }
+        .card { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: var(--shadow); }
 
-        /* Layout Architecture */
+        /* Sidebar Architecture */
         #sidebar {
-            width: 300px; background: var(--sidebar-bg); padding: 2rem 1.5rem;
+            width: 280px; background: var(--sidebar-bg); padding: 2rem 1.5rem; color: white;
             display: flex; flex-direction: column; gap: 0.5rem; z-index: 10;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.05); transition: var(--transition);
         }
-        .logo-area { display: flex; flex-direction: column; gap: 5px; color: var(--primary); margin-bottom: 2rem; }
-        .logo-title { font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .logo-subtitle { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+        .logo-area { display: flex; flex-direction: column; gap: 5px; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem;}
+        .logo-title { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px; color: white;}
+        .logo-subtitle { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); }
 
         .nav-btn {
             display: flex; align-items: center; gap: 12px; padding: 0.8rem 1rem; border: none;
-            background: transparent; color: var(--text-color); font-size: 1rem; text-align: left;
+            background: transparent; color: rgba(255,255,255,0.7); font-size: 0.95rem; text-align: left;
             border-radius: 8px; cursor: pointer; transition: var(--transition); font-weight: 500;
         }
-        .nav-btn:hover, .nav-btn.active { background: var(--primary); color: white; }
+        .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.1); color: white; }
         
         #main-content { flex: 1; padding: 2rem; overflow-y: auto; }
-        .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Dashboard & Components */
+        /* Dashboard Data Visualization */
         .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; border-left: 4px solid var(--primary); }
         .stat-card.accent { border-left-color: var(--accent); }
         .stat-card.success { border-left-color: var(--success); }
-        .stat-card.warning { border-left-color: #e67e22; }
-        .stat-icon { width: 50px; height: 50px; border-radius: 10px; background: rgba(0,75,135,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary); }
+        .stat-icon { width: 45px; height: 45px; border-radius: 10px; background: rgba(0,75,135,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--primary); }
         .stat-info h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; margin-bottom: 0.2rem; }
-        .stat-info .value { font-size: 1.6rem; font-weight: 700; }
+        .stat-info .value { font-size: 1.5rem; font-weight: 700; }
 
         .dashboard-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
         .list-card { padding: 1.5rem; max-height: 350px; overflow-y: auto; }
-        .list-card h3 { color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; }
-        .list-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .list-card h3 { color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; font-size: 1rem;}
+        .list-item { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
 
-        /* Forms & Tables */
+        /* Form Engineering */
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem; }
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
         label { font-weight: 600; font-size: 0.85rem; color: var(--primary); }
-        input, select, textarea {
-            padding: 0.8rem 1rem; border: 1px solid var(--glass-border); border-radius: 6px;
-            background: rgba(255, 255, 255, 0.8); color: var(--text-color); font-size: 0.95rem; outline: none; transition: var(--transition);
+        input, select {
+            padding: 0.75rem 1rem; border: 1px solid #d1d9e6; border-radius: 6px;
+            background: #fafbfc; color: var(--text-color); font-size: 0.95rem; outline: none; transition: var(--transition);
         }
-        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 75, 135, 0.15); }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 75, 135, 0.1); background: white;}
         
-        .radio-group { display: flex; gap: 1.5rem; padding: 0.5rem 0; }
-        .radio-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-color); font-size: 0.95rem; font-weight: 500; }
-        .radio-group input[type="radio"] { transform: scale(1.2); cursor: pointer; }
-
         .btn {
-            padding: 0.8rem 1.5rem; border: none; border-radius: 6px; background: var(--primary);
+            padding: 0.75rem 1.5rem; border: none; border-radius: 6px; background: var(--primary);
             color: white; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: var(--transition);
         }
-        .btn:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn:hover { background: var(--secondary); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn-accent { background: var(--accent); color: #000; }
         .btn-accent:hover { background: #d49400; }
+        .btn-success { background: var(--success); }
 
         .table-container { overflow-x: auto; margin-top: 1rem; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; }
-        th { font-weight: 600; background: rgba(0,75,135,0.05); color: var(--primary); }
+        th, td { padding: 1rem; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        th { font-weight: 600; background: #f8fafc; color: var(--primary); }
 
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+        .badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-success { background: rgba(39, 174, 96, 0.1); color: var(--success); border: 1px solid rgba(39,174,96,0.3);}
         
-        .badge { padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-success { background: rgba(39, 174, 96, 0.15); color: var(--success); }
-        .badge-warning { background: rgba(230, 126, 34, 0.15); color: #d35400; }
-
-        /* Print Optimization */
-        @media print {
-            #sidebar, .header-flex button, .search-bar { display: none !important; }
-            #main-content { padding: 0; }
-            .glass { border: none; box-shadow: none; }
-        }
+        #hidden-qr-container { display: none; } /* Used for PDF generation */
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -139,521 +113,354 @@
 </head>
 <body>
 
-    <!-- CAPE CONFERENCE SIDEBAR -->
     <nav id="sidebar">
         <div class="logo-area">
             <div class="logo-title"><i class="fa-solid fa-church"></i> Cape Conference</div>
-            <div class="logo-subtitle">Event Ticketing</div>
+            <div class="logo-subtitle">Advanced Ticketing</div>
         </div>
-        <button class="nav-btn active" onclick="App.ui.navigate('dashboard')"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard Analysis</span></button>
-        <button class="nav-btn" onclick="App.ui.navigate('register')"><i class="fa-solid fa-user-plus"></i> <span>New Registration</span></button>
-        <button class="nav-btn" onclick="App.ui.navigate('directory')"><i class="fa-solid fa-address-book"></i> <span>Master Directory</span></button>
+        <button class="nav-btn active" onclick="App.ui.navigate('dashboard')"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard Analytics</span></button>
+        <button class="nav-btn" onclick="App.ui.navigate('register')"><i class="fa-solid fa-user-plus"></i> <span>Generate Ticket</span></button>
+        <button class="nav-btn" onclick="App.ui.navigate('directory')"><i class="fa-solid fa-server"></i> <span>Master Database</span></button>
+        <button class="nav-btn" onclick="App.ui.navigate('settings')" style="margin-top: auto;"><i class="fa-solid fa-gear"></i> <span>API Settings</span></button>
     </nav>
 
-    <!-- CONTENT DISPLAY LAYER -->
     <main id="main-content">
         
-        <!-- MODULE 1: ANALYTICS DASHBOARD -->
         <section id="dashboard" class="view-section active">
             <div class="header-flex">
                 <div>
-                    <h2 style="color: var(--primary); margin-bottom: 0;">System Overview</h2>
-                    <p style="font-size: 0.9rem; opacity: 0.8;">Automated Event Ticketing & Distribution</p>
+                    <h2 style="color: var(--primary); margin-bottom: 0;">Command Center</h2>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">Real-time registration tracking</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-accent" onclick="App.logic.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
-                    <button class="btn" onclick="App.logic.exportDirectoryPDF()"><i class="fa-solid fa-file-pdf"></i> Export PDF List</button>
+                    <button class="btn btn-accent" onclick="App.logic.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
                 </div>
             </div>
             
             <div class="stat-grid">
-                <div class="glass stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                    <div class="stat-info"><h3>Total Registrations</h3><div class="value" id="dash-total">0</div></div>
+                <div class="card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-ticket"></i></div>
+                    <div class="stat-info"><h3>Total Tickets Issued</h3><div class="value" id="dash-total">0</div></div>
                 </div>
-                <div class="glass stat-card success">
+                <div class="card stat-card success">
                     <div class="stat-icon" style="color:var(--success);"><i class="fa-brands fa-whatsapp"></i></div>
-                    <div class="stat-info"><h3>WhatsApp Sent</h3><div class="value" id="dash-wa">0</div></div>
-                </div>
-                <div class="glass stat-card success">
-                    <div class="stat-icon" style="color:var(--success);"><i class="fa-solid fa-envelope"></i></div>
-                    <div class="stat-info"><h3>Emails Sent</h3><div class="value" id="dash-email">0</div></div>
-                </div>
-                <div class="glass stat-card warning">
-                    <div class="stat-icon" style="color:#e67e22;"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                    <div class="stat-info"><h3>Pending Delivery</h3><div class="value" id="dash-pending">0</div></div>
+                    <div class="stat-info"><h3>WhatsApp Links Opened</h3><div class="value" id="dash-wa">0</div></div>
                 </div>
             </div>
 
             <div class="dashboard-lists">
-                <div class="glass list-card">
+                <div class="card list-card">
                     <h3>Registrations by District</h3>
                     <div id="list-districts"></div>
                 </div>
-                <div class="glass list-card">
+                <div class="card list-card">
                     <h3>Registrations by Church</h3>
                     <div id="list-churches"></div>
                 </div>
             </div>
         </section>
 
-        <!-- MODULE 2: REGISTRATION ENGINE -->
         <section id="register" class="view-section">
-            <h2>Attendee Registration & Ticketing</h2>
-            <div class="glass" style="padding: 2rem; margin-top: 1rem; border-top: 4px solid var(--primary);">
-                <form id="reg-form" onsubmit="App.logic.executeRegistration(event)">
+            <h2>Delegate Registration</h2>
+            <div class="card" style="padding: 2rem; margin-top: 1rem; border-top: 4px solid var(--primary);">
+                <form id="reg-form" onsubmit="App.logic.processRegistration(event)">
                     
-                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--secondary);">Personal Details</h3>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Personal Details</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Full Name *</label><input type="text" id="form-name" required></div>
-                        <div class="form-group">
-                            <label>Gender *</label>
-                            <select id="form-gender" required>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label>Age *</label><input type="number" id="form-age" min="1" max="120" required></div>
+                        <div class="form-group"><label>Age *</label><input type="number" id="form-age" min="1" required></div>
+                        <div class="form-group"><label>WhatsApp Number *</label><input type="tel" id="form-phone" required placeholder="e.g. 27821234567 (Include Country Code, No '+')"></div>
+                        <div class="form-group"><label>Email Address</label><input type="email" id="form-email"></div>
                     </div>
 
-                    <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem; color: var(--secondary);">Contact & Delivery</h3>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Phone / WhatsApp Number *</label><input type="tel" id="form-phone" required placeholder="+27..."></div>
-                        <div class="form-group"><label>Email Address *</label><input type="email" id="form-email" required></div>
-                        <div class="form-group">
-                            <label>Ticket Delivery Method *</label>
-                            <div class="radio-group">
-                                <label><input type="radio" name="delivery" value="WhatsApp" required> WhatsApp</label>
-                                <label><input type="radio" name="delivery" value="Email" required> Email</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem; color: var(--secondary);">Church Ecosystem</h3>
+                    <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Conference Details</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Cape Conference District *</label>
                             <select id="form-district" required onchange="App.ui.populateChurches()">
-                                <option value="">Select Official District...</option>
-                                <!-- Populated dynamically -->
+                                <option value="">Select District...</option>
+                                <option value="Western Region - Northern Peninsula">Western Region - Northern Peninsula</option>
+                                <option value="Western Region - Southern Suburbs">Western Region - Southern Suburbs</option>
+                                <option value="Western Region - Helderberg">Western Region - Helderberg</option>
+                                <option value="Eastern Region - Motherwell">Eastern Region - Motherwell</option>
+                                <option value="Northern Cape - Kimberley">Northern Cape - Kimberley</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Local Church *</label>
-                            <select id="form-church" required>
-                                <option value="">Select District First...</option>
-                            </select>
+                            <select id="form-church" required><option value="">Select District First...</option></select>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 2rem; padding: 1.2rem; font-size: 1.1rem;">
-                        <i class="fa-solid fa-file-pdf"></i> Generate PDF Ticket & Complete Registration
+                    <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 1.5rem; padding: 1.2rem; font-size: 1.1rem;">
+                        <i class="fa-solid fa-file-pdf"></i> Generate Ticket & Open WhatsApp
                     </button>
                 </form>
             </div>
         </section>
 
-        <!-- MODULE 3: MASTER DATABASE DIRECTORY -->
         <section id="directory" class="view-section">
             <div class="header-flex">
-                <h2>Delegate Directory</h2>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" class="glass search-bar" id="dir-search" placeholder="Search name, Reg ID, Phone..." style="width:300px; padding: 0.6rem 1rem;" onkeyup="App.logic.filterDirectory(this.value)">
-                    <button class="btn btn-accent" onclick="window.print()"><i class="fa-solid fa-print"></i> Print List</button>
-                </div>
+                <h2>Master Database</h2>
+                <input type="text" class="card" id="dir-search" placeholder="Search records..." style="width:300px; padding: 0.6rem 1rem; border: 1px solid #ddd;" onkeyup="App.logic.filterDirectory(this.value)">
             </div>
-            <div class="glass table-container">
+            <div class="card table-container">
                 <table id="directory-table">
                     <thead>
                         <tr>
-                            <th>Reg Number</th>
-                            <th>Ticket #</th>
-                            <th>Full Name</th>
-                            <th>Church (District)</th>
-                            <th>Delivery Status</th>
-                            <th>Actions</th>
+                            <th>Reg #</th>
+                            <th>Name</th>
+                            <th>WhatsApp</th>
+                            <th>District / Church</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="directory-table-body"></tbody>
                 </table>
             </div>
         </section>
+
+        <section id="settings" class="view-section">
+            <h2>API & Webhook Integrations</h2>
+            <div class="card" style="padding: 2rem; margin-top: 1rem;">
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 1.5rem; line-height: 1.5;">
+                    Because static HTML cannot securely store private API keys (like Twilio or Meta passwords), you can use a <strong>Webhook</strong> to automate background messaging. <br><br>
+                    <strong>Instructions:</strong> Go to <a href="https://make.com" target="_blank" style="color:var(--primary);">Make.com</a> or Zapier, create a "Custom Webhook" trigger, and paste the URL they provide below. Every time a ticket is generated, this system will securely POST the registration JSON data to that URL.
+                </p>
+                <div class="form-group">
+                    <label>Automation Webhook URL (Make.com / Zapier)</label>
+                    <input type="url" id="setting-webhook" placeholder="https://hook.us1.make.com/xxxxxxxxxxxxxxx">
+                </div>
+                <button class="btn btn-success" style="margin-top: 1rem;" onclick="App.logic.saveSettings()">Save Configuration</button>
+            </div>
+        </section>
+
     </main>
 
-    <!-- =========================================
-       APPLICATION LOGIC INFRASTRUCTURE
-       ========================================= -->
+    <div id="hidden-qr-container"></div>
+
     <script>
-        /**
-         * Authoritative Cape Conference Districts & Placeholder Local Churches
-         * Mapped according to SDA organizational structure.
-         */
-        const CC_DATA = {
-            "Western Region - Northern Peninsula": ["Goodwood SDA", "Belhar SDA", "Bellville SDA", "Parow SDA", "Elsies River SDA"],
+        const CC_CHURCHES = {
+            "Western Region - Northern Peninsula": ["Goodwood SDA", "Belhar SDA", "Bellville SDA", "Parow SDA"],
             "Western Region - Southern Suburbs": ["Claremont SDA", "Plumstead SDA", "Wynberg SDA", "Athlone SDA"],
-            "Western Region - Helderberg": ["Helderberg College Church", "Somerset West SDA", "Strand SDA", "Macassar SDA"],
-            "Eastern Region - Motherwell": ["Motherwell Central SDA", "KwaZakhele SDA", "New Brighton SDA", "Zwide SDA"],
-            "Eastern Region - East London": ["East London Central", "Mdantsane SDA", "Ginsberg SDA"],
-            "Eastern Region - Karoo": ["Beaufort West SDA", "Graaff-Reinet SDA", "Victoria West SDA"],
-            "Northern Cape - Kimberley": ["Beaconsfield SDA (Historic)", "Kimberley Central", "Galeshewe SDA", "Roodepan SDA"]
+            "Western Region - Helderberg": ["Helderberg College Church", "Somerset West SDA", "Strand SDA"],
+            "Eastern Region - Motherwell": ["Motherwell Central SDA", "KwaZakhele SDA", "New Brighton SDA"],
+            "Northern Cape - Kimberley": ["Beaconsfield SDA", "Kimberley Central", "Galeshewe SDA"]
         };
 
         const App = {
-            state: {
-                dbKey: 'cc_ticketing_db',
-                eventDetails: {
-                    name: "Cape Conference Event 2026",
-                    date: "15 August 2026",
-                    venue: "Good Hope Center, Cape Town"
-                }
-            },
+            state: { dbKey: 'cc_pro_db', settingsKey: 'cc_settings' },
 
-            // Native Persistent Data Engine
             db: {
                 fetch: () => JSON.parse(localStorage.getItem(App.state.dbKey)) || [],
-                commit: (payload) => localStorage.setItem(App.state.dbKey, JSON.stringify(payload)),
+                commit: (data) => localStorage.setItem(App.state.dbKey, JSON.stringify(data)),
+                getWebhook: () => localStorage.getItem(App.state.settingsKey) || "",
+                saveWebhook: (url) => localStorage.setItem(App.state.settingsKey, url),
                 
-                generateRegNumber: () => {
-                    const store = App.db.fetch();
-                    const count = store.length + 1;
-                    return "AA2026-" + String(count).padStart(6, '0');
-                },
-
-                generateTicketNumber: () => {
-                    return "TKT-" + Math.floor(10000000 + Math.random() * 90000000);
-                },
-
                 insert: (record) => {
                     const store = App.db.fetch();
-                    
-                    // Duplicate Validation (Phone or Email)
-                    const duplicate = store.find(r => r.phone === record.phone || r.email === record.email);
-                    if (duplicate) {
-                        alert(`Validation Blocked: The phone number or email provided is already associated with Registration Number: ${duplicate.regNumber}`);
+                    // Prevent duplicate Phone numbers
+                    if (store.find(r => r.phone === record.phone)) {
+                        alert("Validation Error: This WhatsApp number has already been registered.");
                         return false;
                     }
-
-                    record.regNumber = App.db.generateRegNumber();
-                    record.ticketNumber = App.db.generateTicketNumber();
-                    record.dateRegistered = new Date().toLocaleDateString('en-ZA');
-                    record.deliveryStatus = 'Pending';
-                    
+                    record.regNumber = "CC26-" + String(store.length + 1).padStart(5, '0');
+                    record.timestamp = new Date().toISOString();
+                    record.waOpened = false;
                     store.push(record);
                     App.db.commit(store);
                     return record;
-                },
-
-                updateStatus: (regNumber, newStatus) => {
-                    const store = App.db.fetch();
-                    const idx = store.findIndex(r => r.regNumber === regNumber);
-                    if(idx > -1) {
-                        store[idx].deliveryStatus = newStatus;
-                        App.db.commit(store);
-                    }
                 }
             },
 
-            // UI Interaction Engine
             ui: {
-                navigate: (targetSection) => {
+                navigate: (section) => {
                     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                     document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-                    
                     event.currentTarget.classList.add('active');
-                    document.getElementById(targetSection).classList.add('active');
+                    document.getElementById(section).classList.add('active');
 
-                    if (targetSection === 'dashboard') App.logic.refreshDashboard();
-                    if (targetSection === 'directory') App.logic.filterDirectory('');
+                    if (section === 'dashboard') App.logic.refreshDashboard();
+                    if (section === 'directory') App.logic.filterDirectory('');
+                    if (section === 'settings') document.getElementById('setting-webhook').value = App.db.getWebhook();
                 },
-
-                initDistricts: () => {
-                    const distSelect = document.getElementById('form-district');
-                    Object.keys(CC_DATA).forEach(district => {
-                        distSelect.innerHTML += `<option value="${district}">${district}</option>`;
-                    });
-                },
-
                 populateChurches: () => {
-                    const district = document.getElementById('form-district').value;
-                    const churchSelect = document.getElementById('form-church');
-                    churchSelect.innerHTML = '<option value="">Select Church...</option>';
-                    
-                    if(CC_DATA[district]) {
-                        CC_DATA[district].forEach(church => {
-                            churchSelect.innerHTML += `<option value="${church}">${church}</option>`;
-                        });
+                    const dist = document.getElementById('form-district').value;
+                    const select = document.getElementById('form-church');
+                    select.innerHTML = '<option value="">Select Church...</option>';
+                    if(CC_CHURCHES[dist]) {
+                        CC_CHURCHES[dist].forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
                     }
                 }
             },
 
-            // External Communications Integration Mock Layer
-            api: {
-                // Twilio WhatsApp API Implementation Template
-                sendWhatsApp: async (attendee, pdfBlobBase64) => {
-                    /* PRODUCTION TWILIO IMPLEMENTATION:
-                       const TWILIO_SID = 'YOUR_SID';
-                       const TWILIO_AUTH = 'YOUR_AUTH';
-                       const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`;
-                       // Form data with To, From, Body, and MediaUrl (pointing to hosted PDF)
-                    */
-                    console.log(`[API MOCK] Connecting to WhatsApp Business API for ${attendee.phone}...`);
-                    return new Promise(resolve => setTimeout(() => resolve(true), 1500));
+            logic: {
+                saveSettings: () => {
+                    App.db.saveWebhook(document.getElementById('setting-webhook').value);
+                    alert("Webhook Configuration Saved!");
                 },
 
-                // EmailJS API Implementation Template
-                sendEmail: async (attendee, pdfBlobBase64) => {
-                    /* PRODUCTION EMAILJS IMPLEMENTATION:
-                       emailjs.init("YOUR_PUBLIC_KEY");
-                       const templateParams = {
-                           to_email: attendee.email,
-                           to_name: attendee.name,
-                           ticket_number: attendee.ticketNumber,
-                           attachment: pdfBlobBase64 // Requires specific EmailJS setup for attachments
-                       };
-                       await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
-                    */
-                    console.log(`[API MOCK] Connecting to SMTP Relay for ${attendee.email}...`);
-                    return new Promise(resolve => setTimeout(() => resolve(true), 1500));
-                }
-            },
-
-            // Core Logic Systems
-            logic: {
-                executeRegistration: async (e) => {
+                processRegistration: async (e) => {
                     e.preventDefault();
                     
-                    // 1. Gather Data
-                    const profile = {
+                    const record = {
                         name: document.getElementById('form-name').value,
-                        gender: document.getElementById('form-gender').value,
                         age: document.getElementById('form-age').value,
-                        phone: document.getElementById('form-phone').value,
+                        phone: document.getElementById('form-phone').value.replace(/[^0-9]/g, ''), // Strip non-numbers
                         email: document.getElementById('form-email').value,
-                        deliveryMethod: document.querySelector('input[name="delivery"]:checked').value,
                         district: document.getElementById('form-district').value,
                         church: document.getElementById('form-church').value
                     };
 
-                    // 2. Validate & Store
-                    const savedRecord = App.db.insert(profile);
-                    if (!savedRecord) return; // Blocked by duplicate check
+                    const savedRecord = App.db.insert(record);
+                    if (!savedRecord) return;
 
-                    // 3. UI Loading State
-                    const btn = document.querySelector('button[type="submit"]');
-                    const ogText = btn.innerHTML;
-                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF & Contacting APIs...`;
-                    btn.disabled = true;
+                    // 1. Generate & Embed QR Code in PDF
+                    await App.logic.generateAndDownloadPDF(savedRecord);
 
-                    // 4. Generate PDF natively
-                    const pdfDoc = App.logic.generatePDFTicket(savedRecord);
-                    const pdfBlobURI = pdfDoc.output('datauristring'); // For API attachments
-                    
-                    // 5. Download PDF to local machine instantly
-                    pdfDoc.save(`Ticket_${savedRecord.regNumber}.pdf`);
-
-                    // 6. Execute Delivery Integrations
-                    let apiSuccess = false;
-                    try {
-                        if (savedRecord.deliveryMethod === 'WhatsApp') {
-                            apiSuccess = await App.api.sendWhatsApp(savedRecord, pdfBlobURI);
-                        } else {
-                            apiSuccess = await App.api.sendEmail(savedRecord, pdfBlobURI);
-                        }
-
-                        if (apiSuccess) {
-                            App.db.updateStatus(savedRecord.regNumber, `Sent (${savedRecord.deliveryMethod})`);
-                        }
-                    } catch (error) {
-                        console.error("API Delivery Failed", error);
-                        App.db.updateStatus(savedRecord.regNumber, 'Failed to Send');
+                    // 2. Fire Webhook (If configured) - Real Advanced Automation
+                    const webhookUrl = App.db.getWebhook();
+                    if (webhookUrl) {
+                        try {
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(savedRecord)
+                            });
+                            console.log("Webhook fired to automation server.");
+                        } catch(err) { console.warn("Webhook failed", err); }
                     }
 
-                    // 7. Reset Form & State
+                    // 3. Open WhatsApp Native Bridge
+                    // We use the wa.me protocol. The user will click send to deliver a message to the Conference.
+                    const msg = `*Cape Conference Event Registration*\n\nHello, I have just registered!\n\n*Name:* ${savedRecord.name}\n*Reg No:* ${savedRecord.regNumber}\n*Church:* ${savedRecord.church}\n\n_Note: I have downloaded my PDF ticket to this device._`;
+                    const waUrl = `https://wa.me/${savedRecord.phone}?text=${encodeURIComponent(msg)}`;
+                    
+                    // Mark as WA opened
+                    const store = App.db.fetch();
+                    store.find(r => r.regNumber === savedRecord.regNumber).waOpened = true;
+                    App.db.commit(store);
+
                     e.target.reset();
-                    btn.innerHTML = ogText;
-                    btn.disabled = false;
-                    alert(`Success! Registration ${savedRecord.regNumber} completed.\nPDF has been downloaded and delivered via ${savedRecord.deliveryMethod}.`);
+                    
+                    // Open WhatsApp in a new tab/app window
+                    window.open(waUrl, '_blank');
+                    alert(`Registration Complete!\n\n1. Your PDF Ticket is downloading.\n2. WhatsApp has been opened to confirm your registration.`);
                 },
 
-                generatePDFTicket: (record) => {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
+                generateAndDownloadPDF: (record) => {
+                    return new Promise((resolve) => {
+                        // Generate QR Code Base64 Image
+                        const qrContainer = document.getElementById('hidden-qr-container');
+                        qrContainer.innerHTML = ''; // clear previous
+                        new QRCode(qrContainer, { text: record.regNumber, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.H });
+                        
+                        setTimeout(() => {
+                            const qrCanvas = qrContainer.querySelector('canvas');
+                            const qrBase64 = qrCanvas.toDataURL("image/png");
 
-                    // Blue Header Banner
-                    doc.setFillColor(0, 75, 135); // SDA Blue
-                    doc.rect(0, 0, 148, 40, 'F');
-                    
-                    // Header Text
-                    doc.setTextColor(255, 255, 255);
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(16);
-                    doc.text("CAPE CONFERENCE OF", 74, 18, { align: "center" });
-                    doc.setFontSize(14);
-                    doc.text("SEVENTH-DAY ADVENTISTS", 74, 25, { align: "center" });
-                    
-                    // Event Sub-banner
-                    doc.setFillColor(242, 169, 0); // SDA Gold
-                    doc.rect(0, 40, 148, 10, 'F');
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(12);
-                    doc.text(App.state.eventDetails.name.toUpperCase(), 74, 47, { align: "center" });
+                            const { jsPDF } = window.jspdf;
+                            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
 
-                    // Attendee Name (Hero)
-                    doc.setTextColor(0, 75, 135);
-                    doc.setFontSize(20);
-                    doc.text(record.name.toUpperCase(), 74, 70, { align: "center" });
-                    
-                    // Divider Line
-                    doc.setDrawColor(200, 200, 200);
-                    doc.line(15, 75, 133, 75);
+                            // Branding Header
+                            doc.setFillColor(0, 75, 135); 
+                            doc.rect(0, 0, 148, 35, 'F');
+                            doc.setTextColor(255, 255, 255);
+                            doc.setFont("helvetica", "bold");
+                            doc.setFontSize(14);
+                            doc.text("CAPE CONFERENCE", 74, 15, { align: "center" });
+                            doc.setFontSize(10);
+                            doc.text("OFFICIAL DELEGATE TICKET", 74, 23, { align: "center" });
 
-                    // Details Grid
-                    doc.setTextColor(50, 50, 50);
-                    doc.setFontSize(10);
-                    
-                    const startY = 85;
-                    const lineSpacing = 8;
-                    
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Registration No:", 15, startY);
-                    doc.text("Ticket Number:", 15, startY + lineSpacing);
-                    doc.text("Status:", 15, startY + lineSpacing*2);
-                    doc.text("Church / District:", 15, startY + lineSpacing*3);
-                    doc.text("Contact:", 15, startY + lineSpacing*4);
+                            // QR Code embedded directly in the PDF
+                            doc.addImage(qrBase64, 'PNG', 54, 45, 40, 40);
 
-                    doc.setFont("helvetica", "normal");
-                    doc.text(record.regNumber, 55, startY);
-                    doc.text(record.ticketNumber, 55, startY + lineSpacing);
-                    doc.setTextColor(39, 174, 96); // Green
-                    doc.text("CONFIRMED", 55, startY + lineSpacing*2);
-                    doc.setTextColor(50, 50, 50);
-                    doc.text(`${record.church} (${record.district.split(' - ')[0]})`, 55, startY + lineSpacing*3);
-                    doc.text(`${record.phone} | ${record.email}`, 55, startY + lineSpacing*4);
+                            // Text Data
+                            doc.setTextColor(0, 0, 0);
+                            doc.setFontSize(16);
+                            doc.text(record.name.toUpperCase(), 74, 95, { align: "center" });
+                            
+                            doc.setFontSize(10);
+                            doc.setFont("helvetica", "normal");
+                            doc.text(`Reg Number:`, 20, 110);
+                            doc.setFont("helvetica", "bold");
+                            doc.text(record.regNumber, 60, 110);
 
-                    // Event Details Section
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(15, 125, 118, 30, 'F');
-                    
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Event Details:", 20, 133);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(`Date: ${App.state.eventDetails.date}`, 20, 141);
-                    doc.text(`Venue: ${App.state.eventDetails.venue}`, 20, 149);
+                            doc.setFont("helvetica", "normal");
+                            doc.text(`Church:`, 20, 120);
+                            doc.setFont("helvetica", "bold");
+                            doc.text(record.church, 60, 120);
 
-                    // Footer
-                    doc.setFontSize(8);
-                    doc.setTextColor(150, 150, 150);
-                    doc.text("This ticket is digitally generated. Please present at the venue.", 74, 200, { align: "center" });
+                            doc.setFont("helvetica", "normal");
+                            doc.text(`District:`, 20, 130);
+                            doc.setFont("helvetica", "bold");
+                            doc.text(record.district.split(' - ')[0], 60, 130);
 
-                    return doc;
+                            // Footer
+                            doc.setFillColor(242, 169, 0); 
+                            doc.rect(0, 195, 148, 15, 'F');
+                            doc.setTextColor(0, 0, 0);
+                            doc.setFontSize(8);
+                            doc.text("Please present this QR code at the registration desk.", 74, 204, { align: "center" });
+
+                            doc.save(`Cape_Ticket_${record.regNumber}.pdf`);
+                            resolve(true);
+                        }, 500); // Wait for QRCode generation to render to canvas
+                    });
                 },
 
                 refreshDashboard: () => {
                     const store = App.db.fetch();
-                    
                     document.getElementById('dash-total').innerText = store.length;
-                    document.getElementById('dash-wa').innerText = store.filter(r => r.deliveryStatus.includes('WhatsApp')).length;
-                    document.getElementById('dash-email').innerText = store.filter(r => r.deliveryStatus.includes('Email')).length;
-                    document.getElementById('dash-pending').innerText = store.filter(r => r.deliveryStatus === 'Pending').length;
+                    document.getElementById('dash-wa').innerText = store.filter(r => r.waOpened).length;
 
-                    // Aggregate lists
-                    const distCount = {};
-                    const churchCount = {};
+                    const distCount = {}; const churchCount = {};
                     store.forEach(r => {
                         distCount[r.district] = (distCount[r.district] || 0) + 1;
                         churchCount[r.church] = (churchCount[r.church] || 0) + 1;
                     });
 
-                    document.getElementById('list-districts').innerHTML = Object.keys(distCount)
-                        .map(k => `<div class="list-item"><span>${k}</span> <strong>${distCount[k]}</strong></div>`).join('');
-                        
-                    document.getElementById('list-churches').innerHTML = Object.keys(churchCount)
-                        .map(k => `<div class="list-item"><span>${k}</span> <strong>${churchCount[k]}</strong></div>`).join('');
+                    document.getElementById('list-districts').innerHTML = Object.keys(distCount).map(k => `<div class="list-item"><span>${k}</span> <strong>${distCount[k]}</strong></div>`).join('');
+                    document.getElementById('list-churches').innerHTML = Object.keys(churchCount).map(k => `<div class="list-item"><span>${k}</span> <strong>${churchCount[k]}</strong></div>`).join('');
                 },
 
                 filterDirectory: (filterStr) => {
-                    const dataset = App.db.fetch();
-                    const outputTarget = document.getElementById('directory-table-body');
-                    outputTarget.innerHTML = '';
+                    const store = App.db.fetch();
+                    const tbody = document.getElementById('directory-table-body');
+                    tbody.innerHTML = '';
                     const term = filterStr.toLowerCase();
 
-                    const filtered = dataset.filter(x => 
-                        x.name.toLowerCase().includes(term) || 
-                        x.regNumber.toLowerCase().includes(term) ||
-                        x.phone.toLowerCase().includes(term) ||
-                        x.church.toLowerCase().includes(term)
-                    );
+                    const filtered = store.filter(x => x.name.toLowerCase().includes(term) || x.regNumber.toLowerCase().includes(term));
 
                     filtered.forEach(item => {
                         const tr = document.createElement('tr');
-                        const statusClass = item.deliveryStatus.includes('Sent') ? 'badge-success' : 'badge-warning';
+                        const waBadge = item.waOpened ? '<span class="badge badge-success">WA Bridged</span>' : '<span class="badge" style="background:#eee;">Pending</span>';
                         tr.innerHTML = `
-                            <td style="font-family: monospace; font-weight: bold; color: var(--primary);">${item.regNumber}</td>
-                            <td style="font-size: 0.85rem; color: #555;">${item.ticketNumber}</td>
+                            <td style="font-weight: bold; color: var(--primary);">${item.regNumber}</td>
                             <td style="font-weight: 600;">${item.name}</td>
+                            <td>${item.phone}</td>
                             <td>${item.church}<br><small style="color:#777;">${item.district}</small></td>
-                            <td><span class="badge ${statusClass}">${item.deliveryStatus}</span></td>
-                            <td>
-                                <button class="btn btn-accent" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="App.logic.reDownloadTicket('${item.regNumber}')">
-                                    <i class="fa-solid fa-download"></i> PDF
-                                </button>
-                            </td>
+                            <td>${waBadge}</td>
                         `;
-                        outputTarget.appendChild(tr);
+                        tbody.appendChild(tr);
                     });
-                },
-
-                reDownloadTicket: (regNumber) => {
-                    const item = App.db.fetch().find(x => x.regNumber === regNumber);
-                    if(item) {
-                        const doc = App.logic.generatePDFTicket(item);
-                        doc.save(`Ticket_${item.regNumber}.pdf`);
-                    }
                 },
 
                 exportToExcel: () => {
-                    const dataset = App.db.fetch();
-                    if(dataset.length === 0) return alert("No registrations to export.");
-                    const worksheet = XLSX.utils.json_to_sheet(dataset);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
-                    XLSX.writeFile(workbook, `Cape_Conference_Registrations.xlsx`);
-                },
-
-                exportDirectoryPDF: () => {
-                    const dataset = App.db.fetch();
-                    if(dataset.length === 0) return alert("No registrations to export.");
-                    
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    
-                    doc.setFontSize(16);
-                    doc.text("Cape Conference Registration List", 14, 15);
-                    doc.setFontSize(10);
-                    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-
-                    const tableData = dataset.map(r => [r.regNumber, r.name, r.church, r.phone, r.deliveryMethod]);
-                    
-                    doc.autoTable({
-                        startY: 30,
-                        head: [['Reg #', 'Full Name', 'Church', 'Phone', 'Delivery']],
-                        body: tableData,
-                        theme: 'grid',
-                        headStyles: { fillColor: [0, 75, 135] }
-                    });
-
-                    doc.save("Registration_MasterList.pdf");
+                    const store = App.db.fetch();
+                    if(!store.length) return alert("Database is empty.");
+                    const ws = XLSX.utils.json_to_sheet(store);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Database");
+                    XLSX.writeFile(wb, `Cape_Master_${new Date().toISOString().split('T')[0]}.xlsx`);
                 }
             },
 
             init: () => {
-                App.ui.initDistricts();
                 App.logic.refreshDashboard();
             }
         };
 
-        // Boot Application
         window.onload = App.init;
     </script>
 </body>
