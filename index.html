@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventist Event Manager</title>
+    <style>
+        /* =========================================
+           CSS VARIABLES & THEMING
+           ========================================= */
+        :root {
+            --primary: #004b87; /* Classic SDA Blue */
+            --secondary: #007cc3;
+            --accent: #f2a900;
+            --bg-color: #eef2f5;
+            --text-color: #2c3e50;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --sidebar-bg: #ffffff;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #66a3d2;
+            --secondary: #3498db;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: rgba(30, 30, 30, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --sidebar-bg: #1e1e1e;
+        }
+
+        /* =========================================
+           GLOBAL RESET & TYPOGRAPHY
+           ========================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; overflow: hidden; transition: var(--transition); }
+        h1, h2, h3 { color: var(--primary); margin-bottom: 1rem; }
+        [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3 { color: var(--text-color); }
+        
+        /* =========================================
+           LAYOUT & GLASSMORPHISM
+           ========================================= */
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 2rem; }
+        .nav-btn {
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Main Content Area */
+        #main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =========================================
+           COMPONENTS
+           ========================================= */
+        /* Dashboard Grid */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { padding: 1.5rem; text-align: center; }
+        .stat-card h3 { font-size: 1rem; color: var(--text-color); opacity: 0.8; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2.5rem; font-weight: bold; color: var(--primary); }
+
+        /* Forms */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;}
+        label { font-weight: 600; font-size: 0.9rem; }
+        input, select, textarea {
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+        [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: rgba(0,0,0,0.2); border-color: #444; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 91, 159, 0.2); }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-full { width: 100%; margin-top: 1rem; }
+
+        /* Tables */
+        .table-container { overflow-x: auto; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); }
+        th { font-weight: 600; color: var(--primary); }
+        tr:hover td { background: rgba(0, 91, 159, 0.05); }
+        
+        /* Utilities */
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .search-bar { width: 100%; max-width: 400px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 1rem; }
+            .logo { display: none; }
+            .nav-btn { white-space: nowrap; }
+            #main-content { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <div class="logo">SDA Event Manager</div>
+        <button class="nav-btn active" onclick="App.ui.navigate('dashboard')">Dashboard</button>
+        <button class="nav-btn" onclick="App.ui.navigate('register')">New Registration</button>
+        <button class="nav-btn" onclick="App.ui.navigate('attendees')">Attendees Directory</button>
+        <button class="nav-btn" onclick="App.ui.toggleTheme()">Toggle Dark Mode</button>
+    </nav>
+
+    <main id="main-content">
+        
+        <section id="dashboard" class="view-section active">
+            <div class="header-flex">
+                <h2>Event Dashboard</h2>
+                <div class="glass" style="padding: 0.5rem 1rem; border-radius: 20px;">Live Offline Mode</div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="glass stat-card">
+                    <h3>Total Registered</h3>
+                    <div class="value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card glass">
+                    <h3>Checked In</h3>
+                    <div class="value" id="stat-checkedin" style="color: var(--success);">0</div>
+                </div>
+                <div class="stat-card glass">
+                    <h3>Male Attendees</h3>
+                    <div class="value" id="stat-male">0</div>
+                </div>
+                <div class="stat-card glass">
+                    <h3>Female Attendees</h3>
+                    <div class="value" id="stat-female">0</div>
+                </div>
+            </div>
+
+            <div class="glass" style="padding: 2rem;">
+                <h3>System Notifications</h3>
+                <p>Welcome to the offline-first registration system. Data is saved locally and securely on this device.</p>
+            </div>
+        </section>
+
+        <section id="register" class="view-section">
+            <h2>New Attendee Registration</h2>
+            <div class="glass" style="padding: 2rem;">
+                <form id="registration-form" onsubmit="App.logic.handleRegistration(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="reg-name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>ID / Passport Number *</label>
+                            <input type="text" id="reg-id" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="tel" id="reg-phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="reg-email">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender *</label>
+                            <select id="reg-gender" required>
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Local Church *</label>
+                            <input type="text" id="reg-church" required>
+                        </div>
+                        <div class="form-group">
+                            <label>District</label>
+                            <input type="text" id="reg-district">
+                        </div>
+                        <div class="form-group">
+                            <label>Dietary Requirements</label>
+                            <select id="reg-diet">
+                                <option value="None">None</option>
+                                <option value="Vegetarian">Vegetarian</option>
+                                <option value="Vegan">Vegan</option>
+                                <option value="Gluten-Free">Gluten-Free</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-full">Complete Registration</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="attendees" class="view-section">
+            <div class="header-flex">
+                <h2>Attendees Directory</h2>
+                <input type="text" class="search-bar glass" placeholder="Search by Name, ID, or Church..." onkeyup="App.logic.searchAttendees(this.value)">
+            </div>
+            
+            <div class="glass table-container">
+                <table id="attendees-table">
+                    <thead>
+                        <tr>
+                            <th>Reg #</th>
+                            <th>Name</th>
+                            <th>Church</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendees-tbody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * Core Application Namespace
+         * Modular architecture for maintainability within a single file.
+         */
+        const App = {
+            
+            // 1. Data Layer (Offline Persistence)
+            db: {
+                key: 'sda_event_db',
+                getData: function() {
+                    const data = localStorage.getItem(this.key);
+                    return data ? JSON.parse(data) : [];
+                },
+                saveData: function(dataArray) {
+                    localStorage.setItem(this.key, JSON.stringify(dataArray));
+                },
+                addRecord: function(record) {
+                    const data = this.getData();
+                    // Generate unique Registration Number (e.g., SDA-2026-XXXX)
+                    record.regNumber = `SDA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+                    record.timestamp = new Date().toISOString();
+                    record.checkedIn = true; // Walk-ins are checked in by default
+                    data.push(record);
+                    this.saveData(data);
+                    return record.regNumber;
+                },
+                updateStatus: function(regNumber) {
+                    const data = this.getData();
+                    const index = data.findIndex(r => r.regNumber === regNumber);
+                    if(index > -1) {
+                        data[index].checkedIn = !data[index].checkedIn;
+                        this.saveData(data);
+                    }
+                }
+            },
+
+            // 2. User Interface Layer
+            ui: {
+                navigate: function(sectionId) {
+                    // Update Active Button
+                    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                    event.currentTarget.classList.add('active');
+                    
+                    // Update Active Section
+                    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+                    document.getElementById(sectionId).classList.add('active');
+
+                    // Refresh data based on view
+                    if(sectionId === 'dashboard') App.logic.refreshDashboard();
+                    if(sectionId === 'attendees') App.logic.renderAttendeesTable();
+                },
+                
+                toggleTheme: function() {
+                    const body = document.body;
+                    const currentTheme = body.getAttribute('data-theme');
+                    if (currentTheme === 'dark') {
+                        body.removeAttribute('data-theme');
+                    } else {
+                        body.setAttribute('data-theme', 'dark');
+                    }
+                },
+
+                showAlert: function(message) {
+                    // Simple custom alert (can be upgraded to toast notifications)
+                    alert(message);
+                }
+            },
+
+            // 3. Business Logic Layer
+            logic: {
+                handleRegistration: function(e) {
+                    e.preventDefault();
+                    
+                    // Construct record from form inputs
+                    const newAttendee = {
+                        name: document.getElementById('reg-name').value,
+                        idNumber: document.getElementById('reg-id').value,
+                        phone: document.getElementById('reg-phone').value,
+                        email: document.getElementById('reg-email').value,
+                        gender: document.getElementById('reg-gender').value,
+                        church: document.getElementById('reg-church').value,
+                        district: document.getElementById('reg-district').value,
+                        diet: document.getElementById('reg-diet').value
+                    };
+
+                    // Save to local database
+                    const regNum = App.db.addRecord(newAttendee);
+                    
+                    App.ui.showAlert(`Registration Successful!\nRegistration Number: ${regNum}`);
+                    e.target.reset(); // Clear form
+                },
+
+                refreshDashboard: function() {
+                    const data = App.db.getData();
+                    
+                    const total = data.length;
+                    const checkedIn = data.filter(r => r.checkedIn).length;
+                    const males = data.filter(r => r.gender === 'Male').length;
+                    const females = data.filter(r => r.gender === 'Female').length;
+
+                    document.getElementById('stat-total').innerText = total;
+                    document.getElementById('stat-checkedin').innerText = checkedIn;
+                    document.getElementById('stat-male').innerText = males;
+                    document.getElementById('stat-female').innerText = females;
+                },
+
+                renderAttendeesTable: function(filterText = "") {
+                    const data = App.db.getData();
+                    const tbody = document.getElementById('attendees-tbody');
+                    tbody.innerHTML = '';
+
+                    // Filter logic
+                    const filteredData = data.filter(r => {
+                        const term = filterText.toLowerCase();
+                        return r.name.toLowerCase().includes(term) || 
+                               r.idNumber.toLowerCase().includes(term) ||
+                               r.church.toLowerCase().includes(term) ||
+                               r.regNumber.toLowerCase().includes(term);
+                    });
+
+                    filteredData.forEach(r => {
+                        const tr = document.createElement('tr');
+                        const statusColor = r.checkedIn ? 'var(--success)' : 'var(--danger)';
+                        const statusText = r.checkedIn ? 'Inside' : 'Pending';
+                        
+                        tr.innerHTML = `
+                            <td><strong>${r.regNumber}</strong></td>
+                            <td>${r.name}</td>
+                            <td>${r.church}</td>
+                            <td>${r.phone}</td>
+                            <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                            <td>
+                                <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" 
+                                        onclick="App.logic.toggleStatus('${r.regNumber}')">
+                                    Toggle Check-in
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                },
+
+                searchAttendees: function(query) {
+                    this.renderAttendeesTable(query);
+                },
+
+                toggleStatus: function(regNumber) {
+                    App.db.updateStatus(regNumber);
+                    this.renderAttendeesTable(document.querySelector('.search-bar').value); // Re-render with current search
+                    this.refreshDashboard(); // Sync stats
+                }
+            },
+
+            // 4. Initialization
+            init: function() {
+                App.logic.refreshDashboard();
+                console.log("SDA Event Manager Initialized Successfully.");
+            }
+        };
+
+        // Boot the application when the DOM is ready
+        window.onload = App.init;
+
+    </script>
+</body>
+</html>
