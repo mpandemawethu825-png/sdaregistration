@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SDA Enterprise Registration System</title>
     
-    <!-- External Libraries (Cached for Offline Use) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -95,10 +94,8 @@
 </head>
 <body>
 
-    <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
-    <!-- VIEW: LANDING PAGE -->
     <div id="view-landing" class="center-wrap view">
         <div class="glass auth-card">
             <i class="fa-solid fa-church" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
@@ -112,12 +109,10 @@
         </div>
     </div>
 
-    <!-- VIEW: USER AUTH -->
     <div id="view-auth-user" class="center-wrap view hidden">
         <div class="glass auth-card">
             <h2>Attendee Portal</h2>
             
-            <!-- Login Form -->
             <form id="form-user-login" onsubmit="App.auth.loginUser(event)">
                 <div class="form-group"><input type="email" id="ul-email" placeholder="Email Address" required></div>
                 <div class="form-group"><input type="password" id="ul-pass" placeholder="Password" required></div>
@@ -126,7 +121,6 @@
                 <button type="button" class="btn btn-outline btn-block" style="margin-top: 1rem;" onclick="App.router.nav('landing')">Back</button>
             </form>
 
-            <!-- Register Form -->
             <form id="form-user-reg" class="hidden" onsubmit="App.auth.registerUser(event)">
                 <div class="form-group"><input type="text" id="ur-name" placeholder="Full Name" required></div>
                 <div class="form-group"><input type="email" id="ur-email" placeholder="Email Address" required></div>
@@ -137,20 +131,28 @@
         </div>
     </div>
 
-    <!-- VIEW: ADMIN AUTH -->
     <div id="view-auth-admin" class="center-wrap view hidden">
         <div class="glass auth-card">
             <h2><i class="fa-solid fa-shield-halved"></i> Admin Portal</h2>
-            <form onsubmit="App.auth.loginAdmin(event)">
-                <div class="form-group"><input type="text" id="al-user" placeholder="Username" required></div>
+            
+            <form id="form-admin-login" onsubmit="App.auth.loginAdmin(event)">
+                <div class="form-group"><input type="text" id="al-user" placeholder="Admin Username" required></div>
                 <div class="form-group"><input type="password" id="al-pass" placeholder="Password" required></div>
                 <button type="submit" class="btn btn-block"><i class="fa-solid fa-lock-open"></i> Authenticate</button>
-                <button type="button" class="btn btn-outline btn-block" style="margin-top: 1rem;" onclick="App.router.nav('landing')">Cancel</button>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">Need an admin account? <a href="#" style="color: var(--primary);" onclick="App.ui.toggleAuthForms('admin')">Create Admin</a></p>
+                <button type="button" class="btn btn-outline btn-block" style="margin-top: 1rem;" onclick="App.router.nav('landing')">Back</button>
+            </form>
+
+            <form id="form-admin-reg" class="hidden" onsubmit="App.auth.registerAdmin(event)">
+                <div class="form-group"><input type="text" id="ar-user" placeholder="Create Admin Username" required></div>
+                <div class="form-group"><input type="password" id="ar-pass" placeholder="Create Password" required></div>
+                <div class="form-group"><input type="password" id="ar-pass-confirm" placeholder="Confirm Password" required></div>
+                <button type="submit" class="btn btn-block"><i class="fa-solid fa-user-shield"></i> Create Admin Account</button>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">Already an admin? <a href="#" style="color: var(--primary);" onclick="App.ui.toggleAuthForms('admin')">Login</a></p>
             </form>
         </div>
     </div>
 
-    <!-- VIEW: USER DASHBOARD -->
     <div id="view-user-dash" class="app-container view hidden">
         <div class="sidebar glass" style="border-radius: 0;">
             <h3 style="color: var(--primary); margin-bottom: 2rem;"><i class="fa-solid fa-user"></i> My Portal</h3>
@@ -166,7 +168,6 @@
                 <button class="btn btn-outline" onclick="App.ui.toggleTheme()"><i class="fa-solid fa-moon"></i></button>
             </div>
 
-            <!-- Tab: History -->
             <div id="user-tab-history">
                 <div class="glass" style="padding: 1.5rem;">
                     <h3>Registration History</h3>
@@ -179,7 +180,6 @@
                 </div>
             </div>
 
-            <!-- Tab: New Registration Form -->
             <div id="user-tab-new-reg" class="hidden">
                 <div class="glass" style="padding: 2rem;">
                     <h3 style="margin-bottom: 1.5rem;">Event Registration Form</h3>
@@ -208,24 +208,21 @@
         </div>
     </div>
 
-    <!-- VIEW: ADMIN DASHBOARD -->
     <div id="view-admin-dash" class="app-container view hidden">
         <div class="sidebar glass" style="border-radius: 0;">
             <h3 style="color: var(--primary); margin-bottom: 2rem;"><i class="fa-solid fa-shield-halved"></i> Admin</h3>
             <button class="btn btn-outline" style="text-align: left; border:none;" onclick="App.ui.switchAdminTab('overview')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
             <button class="btn btn-outline" style="text-align: left; border:none;" onclick="App.ui.switchAdminTab('database')"><i class="fa-solid fa-database"></i> Database / Export</button>
-            <button class="btn btn-outline" style="text-align: left; border:none;" onclick="App.ui.switchAdminTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button>
             <div style="flex: 1;"></div>
             <button class="btn btn-danger" onclick="App.auth.logout()"><i class="fa-solid fa-power-off"></i> Logout</button>
         </div>
         
         <div class="main-content">
             <div class="header-flex">
-                <h2>Administrative Command</h2>
+                <h2 id="admin-greeting">Administrative Command</h2>
                 <button class="btn btn-outline" onclick="App.ui.toggleTheme()"><i class="fa-solid fa-moon"></i></button>
             </div>
 
-            <!-- Admin Tab: Overview -->
             <div id="admin-tab-overview">
                 <div class="stat-grid">
                     <div class="glass stat-card"><h3>Total Registrations</h3><div class="val" id="ad-stat-total">0</div></div>
@@ -247,7 +244,6 @@
                 </div>
             </div>
 
-            <!-- Admin Tab: DB / Settings -->
             <div id="admin-tab-database" class="hidden">
                 <div class="glass" style="padding: 2rem;">
                     <h3 style="margin-bottom: 1rem;">Database Operations</h3>
@@ -259,48 +255,25 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Admin Tab: Settings -->
-            <div id="admin-tab-settings" class="hidden">
-                <div class="glass" style="padding: 2rem; max-width: 500px;">
-                    <h3 style="margin-bottom: 1.5rem;">Change Admin Credentials</h3>
-                    <form onsubmit="App.auth.changeAdminCredentials(event)">
-                        <div class="form-group"><label>New Username</label><input type="text" id="set-admin-user" required></div>
-                        <div class="form-group"><label>New Password</label><input type="password" id="set-admin-pass" required></div>
-                        <button type="submit" class="btn"><i class="fa-solid fa-save"></i> Save Credentials</button>
-                    </form>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- =========================================
-       APPLICATION LOGIC (Vanilla JS)
-       ========================================= -->
     <script>
         const App = {
             state: { currentUser: null, isAdmin: false },
 
-            // 1. Asynchronous IndexedDB Engine Wrapper
             db: {
-                name: 'SDA_Enterprise_DB', version: 1, instance: null,
+                name: 'SDA_Enterprise_DB', version: 2, instance: null,
                 init: () => new Promise((resolve, reject) => {
                     const req = indexedDB.open(App.db.name, App.db.version);
                     req.onupgradeneeded = (e) => {
                         const db = e.target.result;
                         if(!db.objectStoreNames.contains('users')) db.createObjectStore('users', {keyPath: 'email'});
+                        if(!db.objectStoreNames.contains('admins')) db.createObjectStore('admins', {keyPath: 'username'});
                         if(!db.objectStoreNames.contains('records')) db.createObjectStore('records', {keyPath: 'regId'});
-                        if(!db.objectStoreNames.contains('config')) db.createObjectStore('config', {keyPath: 'key'});
                     };
                     req.onsuccess = async (e) => {
                         App.db.instance = e.target.result;
-                        // Seed default admin if missing
-                        const adminObj = await App.db.get('config', 'admin_creds');
-                        if(!adminObj) {
-                            const hash = await App.crypto.hash('admin123');
-                            await App.db.put('config', { key: 'admin_creds', user: 'admin', hash: hash });
-                        }
                         resolve();
                     };
                     req.onerror = () => reject("IndexedDB Init Failed");
@@ -319,9 +292,9 @@
                 }),
                 backupDatabase: async () => {
                     const users = await App.db.getAll('users');
+                    const admins = await App.db.getAll('admins');
                     const records = await App.db.getAll('records');
-                    const config = await App.db.getAll('config');
-                    const blob = new Blob([JSON.stringify({users, records, config})], {type: "application/json"});
+                    const blob = new Blob([JSON.stringify({users, admins, records})], {type: "application/json"});
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = `SDA_Backup_${new Date().getTime()}.json`; a.click();
                     App.ui.toast("Database Exported Successfully", "success");
@@ -334,8 +307,8 @@
                         try {
                             const data = JSON.parse(ev.target.result);
                             for(const u of data.users || []) await App.db.put('users', u);
+                            for(const a of data.admins || []) await App.db.put('admins', a);
                             for(const r of data.records || []) await App.db.put('records', r);
-                            for(const c of data.config || []) await App.db.put('config', c);
                             App.ui.toast("Database Restored. Reloading...", "success");
                             setTimeout(() => location.reload(), 1500);
                         } catch(err) { App.ui.toast("Invalid Backup File", "error"); }
@@ -344,7 +317,6 @@
                 }
             },
 
-            // 2. Cryptography Engine
             crypto: {
                 hash: async (str) => {
                     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
@@ -352,7 +324,6 @@
                 }
             },
 
-            // 3. User Interface & Routing Engine
             router: {
                 nav: (viewId) => {
                     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
@@ -387,12 +358,10 @@
                 switchAdminTab: (tab) => {
                     document.getElementById('admin-tab-overview').classList.add('hidden');
                     document.getElementById('admin-tab-database').classList.add('hidden');
-                    document.getElementById('admin-tab-settings').classList.add('hidden');
                     document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
                     if(tab === 'overview') App.ui.renderAdminTable();
                 },
                 
-                // Dynamic Rendering
                 renderUserHistory: async () => {
                     const allRecs = await App.db.getAll('records');
                     const myRecs = allRecs.filter(r => r.userId === App.state.currentUser.email);
@@ -405,9 +374,9 @@
                                 <td><strong>${r.regId}</strong></td>
                                 <td>${r.regDate}</td>
                                 <td><span class="badge ${statusClass}">${r.status}</span></td>
-                                <td>
-                                    <button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.generateRegProof('${r.regId}')"><i class="fa-solid fa-download"></i> Reg Proof</button>
-                                    ${r.status === 'Admitted' ? `<button class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.generateAdmProof('${r.regId}')"><i class="fa-solid fa-ticket"></i> Admission Proof</button>` : ''}
+                                <td style="display:flex; gap:10px;">
+                                    <button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.triggerDownload('${r.regId}', 'reg')"><i class="fa-solid fa-file-pdf"></i> Reg Proof</button>
+                                    ${r.status === 'Admitted' ? `<button class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.triggerDownload('${r.regId}', 'adm')"><i class="fa-solid fa-ticket"></i> Admission Proof</button>` : ''}
                                 </td>
                             </tr>
                         `;
@@ -436,8 +405,8 @@
                                 <td>${r.church}</td>
                                 <td>${r.phone}</td>
                                 <td><span class="badge ${statusClass}">${r.status}</span></td>
-                                <td>
-                                    ${r.status === 'Pending' ? `<button class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.workflow.admitAttendee('${r.regId}')"><i class="fa-solid fa-check"></i> Admit</button>` : `<button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.generateAdmProof('${r.regId}')"><i class="fa-solid fa-print"></i> Reprint</button>`}
+                                <td style="display:flex; gap:10px;">
+                                    ${r.status === 'Pending' ? `<button class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.workflow.admitAttendee('${r.regId}')"><i class="fa-solid fa-check"></i> Admit</button>` : `<button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="App.pdf.triggerDownload('${r.regId}', 'adm')"><i class="fa-solid fa-print"></i> Reprint</button>`}
                                 </td>
                             </tr>
                         `;
@@ -445,7 +414,6 @@
                 }
             },
 
-            // 4. Authentication Pipelines
             auth: {
                 registerUser: async (e) => {
                     e.preventDefault();
@@ -453,8 +421,7 @@
                     const email = document.getElementById('ur-email').value;
                     const pass = await App.crypto.hash(document.getElementById('ur-pass').value);
                     
-                    const existing = await App.db.get('users', email);
-                    if(existing) return App.ui.toast("Email already registered", "error");
+                    if(await App.db.get('users', email)) return App.ui.toast("Email already registered", "error");
 
                     await App.db.put('users', { email, name, pass });
                     App.ui.toast("Registration Successful. Please Login.", "success");
@@ -475,27 +442,39 @@
                         App.ui.toast("Authentication Verified", "success");
                     } else { App.ui.toast("Invalid Credentials", "error"); }
                 },
+
+                registerAdmin: async (e) => {
+                    e.preventDefault();
+                    const user = document.getElementById('ar-user').value;
+                    const pass = document.getElementById('ar-pass').value;
+                    const confirm = document.getElementById('ar-pass-confirm').value;
+
+                    if(pass !== confirm) return App.ui.toast("Passwords do not match", "error");
+                    if(await App.db.get('admins', user)) return App.ui.toast("Admin username already exists", "error");
+
+                    const hash = await App.crypto.hash(pass);
+                    await App.db.put('admins', { username: user, pass: hash });
+
+                    App.ui.toast("Admin Account Created. Please Login.", "success");
+                    App.ui.toggleAuthForms('admin');
+                    e.target.reset();
+                },
                 loginAdmin: async (e) => {
                     e.preventDefault();
                     const user = document.getElementById('al-user').value;
                     const passHash = await App.crypto.hash(document.getElementById('al-pass').value);
                     
-                    const adminObj = await App.db.get('config', 'admin_creds');
-                    if(adminObj.user === user && adminObj.hash === passHash) {
+                    const admin = await App.db.get('admins', user);
+                    if(admin && admin.pass === passHash) {
                         App.state.isAdmin = true;
+                        App.state.currentUser = { name: user, role: 'admin' };
+                        document.getElementById('admin-greeting').innerText = `Administrative Command (${user})`;
                         App.router.nav('admin-dash');
                         App.ui.switchAdminTab('overview');
                         App.ui.toast("System Administrator Authorized", "success");
                     } else { App.ui.toast("Unauthorized Access", "error"); }
                 },
-                changeAdminCredentials: async (e) => {
-                    e.preventDefault();
-                    const newUser = document.getElementById('set-admin-user').value;
-                    const newHash = await App.crypto.hash(document.getElementById('set-admin-pass').value);
-                    await App.db.put('config', { key: 'admin_creds', user: newUser, hash: newHash });
-                    App.ui.toast("Admin Credentials Updated Securely", "success");
-                    e.target.reset();
-                },
+
                 logout: () => {
                     App.state.currentUser = null;
                     App.state.isAdmin = false;
@@ -504,36 +483,29 @@
                 }
             },
 
-            // 5. Business Workflows
             workflow: {
                 submitRegistration: async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const record = Object.fromEntries(formData);
                     
-                    // Duplicate Check (Phone/Email globally)
                     const allRecs = await App.db.getAll('records');
                     if(allRecs.some(r => r.phone === record.phone || r.email === record.email)) {
                         return App.ui.toast("Error: Phone or Email already registered in system.", "error");
                     }
 
-                    // Metadata injection
                     record.regId = `SDA-${new Date().getFullYear()}-${Math.floor(100000+Math.random()*900000)}`;
                     record.userId = App.state.currentUser.email;
-                    
-                    const now = new Date();
-                    record.regDate = now.toLocaleDateString();
-                    record.regTime = now.toLocaleTimeString();
+                    record.regDate = new Date().toLocaleDateString();
+                    record.regTime = new Date().toLocaleTimeString();
                     record.status = 'Pending';
                     
                     await App.db.put('records', record);
                     
                     e.target.reset();
-                    App.ui.toast("Registration Saved! Downloading Proof...", "success");
+                    App.ui.toast("Registration Saved! Processing Document...", "success");
                     App.ui.switchUserTab('history');
-                    
-                    // Auto-Generate Proof of Registration PDF
-                    App.pdf.generateRegProof(record.regId);
+                    App.pdf.triggerDownload(record.regId, 'reg');
                 },
 
                 admitAttendee: async (regId) => {
@@ -541,109 +513,150 @@
                     
                     const record = await App.db.get('records', regId);
                     if(record) {
-                        const now = new Date();
                         record.status = 'Admitted';
-                        record.admDate = now.toLocaleDateString();
-                        record.admTime = now.toLocaleTimeString();
-                        record.admAdmin = 'System Administrator';
+                        record.admDate = new Date().toLocaleDateString();
+                        record.admTime = new Date().toLocaleTimeString();
+                        record.admAdmin = App.state.currentUser.name;
                         
                         await App.db.put('records', record);
                         App.ui.renderAdminTable(document.getElementById('admin-search').value);
-                        App.ui.toast(`Attendee ${regId} Admitted. Generating PDF...`, "success");
-                        
-                        // Auto-generate Admission Proof
-                        App.pdf.generateAdmProof(regId);
+                        App.ui.toast(`Attendee Admitted! Processing Admission PDF...`, "success");
+                        App.pdf.triggerDownload(regId, 'adm');
                     }
                 }
             },
 
-            // 6. PDF Generation Engine
+            // HYBRID PDF ENGINE (Attempts jsPDF, Falls back to Native Print)
             pdf: {
-                generateRegProof: async (regId) => {
-                    const record = await App.db.get('records', regId);
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
+                triggerDownload: async (regId, type) => {
+                    App.ui.toast("Generating Secure PDF...", "info");
                     
-                    // Branding & Header
-                    doc.setFillColor(0, 75, 135); doc.rect(0, 0, 210, 40, 'F');
-                    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-                    doc.setFontSize(22); doc.text("SEVENTH-DAY ADVENTIST CHURCH", 105, 20, {align: "center"});
-                    doc.setFontSize(14); doc.text("PROOF OF REGISTRATION", 105, 30, {align: "center"});
+                    try {
+                        // Check if jsPDF CDN successfully loaded
+                        if (!window.jspdf) throw new Error("jsPDF CDN not loaded");
+                        
+                        const record = await App.db.get('records', regId);
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        
+                        if(type === 'reg') {
+                            doc.setFillColor(0, 75, 135); doc.rect(0, 0, 210, 40, 'F');
+                            doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
+                            doc.setFontSize(22); doc.text("SEVENTH-DAY ADVENTIST CHURCH", 105, 20, {align: "center"});
+                            doc.setFontSize(14); doc.text("PROOF OF REGISTRATION", 105, 30, {align: "center"});
 
-                    // Content
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFontSize(12); doc.text(`Registration ID:`, 20, 60); doc.setFont("helvetica", "normal"); doc.text(record.regId, 60, 60);
-                    doc.setFont("helvetica", "bold"); doc.text(`Status:`, 20, 70); doc.setTextColor(243, 156, 18); doc.text(record.status.toUpperCase(), 60, 70);
-                    
-                    doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold");
-                    doc.text("Attendee Profile", 20, 90); doc.line(20, 92, 190, 92);
-                    
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-                    const details = [
-                        `Full Name: ${record.firstName} ${record.lastName}`,
-                        `ID/Passport: ${record.idNumber}`,
-                        `Contact: ${record.phone} / WA: ${record.whatsapp}`,
-                        `Email: ${record.email}`,
-                        `Local Church: ${record.church}`,
-                        `District: ${record.district} (${record.conference})`,
-                        `Timestamp: ${record.regDate} @ ${record.regTime}`
-                    ];
-                    
-                    let y = 100;
-                    details.forEach(d => { doc.text(d, 20, y); y += 8; });
+                            doc.setTextColor(0, 0, 0);
+                            doc.setFontSize(12); doc.text(`Registration ID:`, 20, 60); doc.setFont("helvetica", "normal"); doc.text(record.regId, 60, 60);
+                            doc.setFont("helvetica", "bold"); doc.text(`Status:`, 20, 70); doc.setTextColor(243, 156, 18); doc.text(record.status.toUpperCase(), 60, 70);
+                            
+                            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold");
+                            doc.text("Attendee Profile", 20, 90); doc.line(20, 92, 190, 92);
+                            
+                            doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+                            const details = [
+                                `Full Name: ${record.firstName} ${record.lastName}`,
+                                `ID/Passport: ${record.idNumber}`,
+                                `Contact: ${record.phone} / WA: ${record.whatsapp}`,
+                                `Email: ${record.email}`,
+                                `Local Church: ${record.church}`,
+                                `District: ${record.district} (${record.conference})`,
+                                `Timestamp: ${record.regDate} @ ${record.regTime}`
+                            ];
+                            let y = 100; details.forEach(d => { doc.text(d, 20, y); y += 8; });
+                            
+                            doc.setFontSize(9); doc.setTextColor(150,150,150);
+                            doc.text("Generated securely via SDA Event Portal.", 105, 280, {align: "center"});
+                            doc.save(`Reg_Proof_${record.regId}.pdf`);
 
-                    // Footer
-                    doc.setFontSize(9); doc.setTextColor(150,150,150);
-                    doc.text("Generated securely via SDA Event Portal. This document acknowledges receipt of registration.", 105, 280, {align: "center"});
+                        } else {
+                            doc.setFillColor(39, 174, 96); 
+                            doc.rect(0, 0, 210, 40, 'F');
+                            doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
+                            doc.setFontSize(22); doc.text("OFFICIAL ADMISSION CREDENTIAL", 105, 20, {align: "center"});
+                            doc.setFontSize(12); doc.text(`REG REF: ${record.regId}`, 105, 30, {align: "center"});
 
-                    doc.save(`Reg_Proof_${record.regId}.pdf`);
+                            doc.setTextColor(39, 174, 96); doc.setFontSize(28);
+                            doc.text("STATUS: ADMITTED", 105, 70, {align: "center"});
+                            
+                            doc.setTextColor(0,0,0); doc.setFontSize(14);
+                            doc.text(`Delegate: ${record.firstName.toUpperCase()} ${record.lastName.toUpperCase()}`, 105, 90, {align: "center"});
+                            doc.setFontSize(12); doc.setFont("helvetica", "normal");
+                            doc.text(`Representing: ${record.church} District`, 105, 100, {align: "center"});
+
+                            doc.setFillColor(240, 240, 240); doc.rect(40, 120, 130, 40, 'F');
+                            doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("Admission Analytics", 45, 130);
+                            doc.setFont("helvetica", "normal");
+                            doc.text(`Date: ${record.admDate}`, 45, 140);
+                            doc.text(`Time: ${record.admTime}`, 45, 148);
+                            doc.text(`Authorized By: ${record.admAdmin}`, 45, 156);
+
+                            doc.line(120, 230, 180, 230); doc.text("Official Registrar Signature", 150, 235, {align:"center"});
+                            doc.save(`Admission_Credential_${record.regId}.pdf`);
+                        }
+                        
+                    } catch (err) {
+                        console.warn("Direct Download blocked or library missing. Deploying Native Fallback...", err);
+                        App.ui.toast("Direct download blocked. Opening Secure Print View...", "info");
+                        App.pdf.nativePrintFallback(regId, type);
+                    }
                 },
 
-                generateAdmProof: async (regId) => {
+                // Bulletproof fallback that forces the browser's native Save-to-PDF window
+                nativePrintFallback: async (regId, type) => {
                     const record = await App.db.get('records', regId);
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
+                    const win = window.open('', '_blank');
                     
-                    // Branding & Header
-                    doc.setFillColor(39, 174, 96); // Green Admission Banner
-                    doc.rect(0, 0, 210, 40, 'F');
-                    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-                    doc.setFontSize(22); doc.text("OFFICIAL ADMISSION CREDENTIAL", 105, 20, {align: "center"});
-                    doc.setFontSize(12); doc.text(`REGISTRATION REF: ${record.regId}`, 105, 30, {align: "center"});
+                    if(!win) return App.ui.toast("Popup blocked! Please allow popups to save your PDF.", "error");
 
-                    // Status Hero
-                    doc.setTextColor(39, 174, 96); doc.setFontSize(28);
-                    doc.text("STATUS: ADMITTED", 105, 70, {align: "center"});
-                    
-                    // Content Details
-                    doc.setTextColor(0,0,0); doc.setFontSize(14);
-                    doc.text(`Delegate: ${record.firstName.toUpperCase()} ${record.lastName.toUpperCase()}`, 105, 90, {align: "center"});
-                    doc.setFontSize(12); doc.setFont("helvetica", "normal");
-                    doc.text(`Representing: ${record.church} District`, 105, 100, {align: "center"});
+                    const title = type === 'reg' ? "Proof of Registration" : "Admission Credential";
+                    const color = type === 'reg' ? "#004b87" : "#27ae60";
 
-                    // Admission Meta Box
-                    doc.setFillColor(240, 240, 240);
-                    doc.rect(40, 120, 130, 40, 'F');
-                    doc.setFontSize(10); doc.setFont("helvetica", "bold");
-                    doc.text("Admission Analytics", 45, 130);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(`Clearance Date: ${record.admDate}`, 45, 140);
-                    doc.text(`Clearance Time: ${record.admTime}`, 45, 148);
-                    doc.text(`Authorized By: ${record.admAdmin}`, 45, 156);
-
-                    // Signature Line
-                    doc.line(120, 230, 180, 230);
-                    doc.text("Official Registrar Signature", 150, 235, {align:"center"});
-
-                    // Footer
-                    doc.setFontSize(9); doc.setTextColor(150,150,150);
-                    doc.text("Please present this document at the venue entrance.", 105, 280, {align: "center"});
-
-                    doc.save(`Admission_Credential_${record.regId}.pdf`);
+                    win.document.write(`
+                        <html><head><title>${title} - ${record.regId}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+                            .banner { background: ${color}; color: white; padding: 30px; text-align: center; margin-bottom: 30px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            .banner h1 { margin: 0 0 10px 0; font-size: 24px; text-transform: uppercase; }
+                            .banner h2 { margin: 0; font-size: 18px; font-weight: normal; }
+                            .content { border: 2px solid #eee; padding: 30px; margin-bottom: 30px; }
+                            .row { display: flex; margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; padding-bottom: 10px; }
+                            .row strong { width: 150px; display: inline-block; }
+                            .footer { text-align: center; color: #888; font-size: 12px; margin-top: 50px; }
+                        </style>
+                        </head><body>
+                            <div class="banner">
+                                <h1>SEVENTH-DAY ADVENTIST CHURCH</h1>
+                                <h2>${title.toUpperCase()}</h2>
+                            </div>
+                            <div class="content">
+                                <div class="row"><strong>Registration ID:</strong> <span>${record.regId}</span></div>
+                                <div class="row"><strong>Status:</strong> <span style="color:${color}; font-weight:bold;">${record.status.toUpperCase()}</span></div>
+                                <br>
+                                <h3>Attendee Profile</h3>
+                                <div class="row"><strong>Full Name:</strong> <span>${record.firstName} ${record.lastName}</span></div>
+                                <div class="row"><strong>ID/Passport:</strong> <span>${record.idNumber}</span></div>
+                                <div class="row"><strong>Contact:</strong> <span>${record.phone} / WA: ${record.whatsapp}</span></div>
+                                <div class="row"><strong>Church:</strong> <span>${record.church}</span></div>
+                                <div class="row"><strong>District:</strong> <span>${record.district} (${record.conference})</span></div>
+                                ${type === 'adm' ? `
+                                    <br><h3>Admission Analytics</h3>
+                                    <div class="row"><strong>Cleared Date:</strong> <span>${record.admDate}</span></div>
+                                    <div class="row"><strong>Cleared Time:</strong> <span>${record.admTime}</span></div>
+                                    <div class="row"><strong>Authorized By:</strong> <span>${record.admAdmin}</span></div>
+                                ` : `
+                                    <div class="row"><strong>Timestamp:</strong> <span>${record.regDate} @ ${record.regTime}</span></div>
+                                `}
+                            </div>
+                            <div class="footer">Please click "Save as PDF" or print this document for your records.</div>
+                            <script>
+                                setTimeout(() => { window.print(); }, 500);
+                            <\/script>
+                        </body></html>
+                    `);
+                    win.document.close();
                 }
             },
 
-            // Initialization
             init: async () => {
                 try {
                     await App.db.init();
@@ -654,7 +667,6 @@
             }
         };
 
-        // Boot Sequence
         window.onload = App.init;
     </script>
 </body>
