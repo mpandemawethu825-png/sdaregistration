@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Offline-First Event Registration System for the Cape Conference of Seventh-day Adventists">
-    <title>Cape Conference | SDA Event Platform</title>
+    <title>Cape Conference | Ticket & Registration System</title>
     
     <!-- =========================================
-       EXTERNAL FREE LIBRARIES & CDNs (APIs)
+       EXTERNAL LIBRARIES & CDNs
        ========================================= -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- SheetJS for Excel Exports -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF for Native PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- EmailJS for Email API Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         /* =========================================
@@ -27,8 +31,8 @@
             --accent: #f2a900; /* SDA Gold/Yellow */
             --bg-color: #f4f7f9;
             --text-color: #2c3e50;
-            --card-bg: rgba(255, 255, 255, 0.9);
-            --glass-border: rgba(0, 75, 135, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(0, 75, 135, 0.15);
             --glass-shadow: 0 8px 30px 0 rgba(0, 75, 135, 0.08);
             --sidebar-bg: #ffffff;
             --success: #27ae60;
@@ -36,25 +40,11 @@
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        [data-theme="dark"] {
-            --primary: #4da8da;
-            --secondary: #3498db;
-            --accent: #f2c94c;
-            --bg-color: #0d1b2a;
-            --text-color: #e0e6ed;
-            --card-bg: rgba(27, 38, 59, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-            --sidebar-bg: #1b263b;
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; overflow: hidden; transition: var(--transition); }
+        body { background: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; overflow: hidden; }
         
         .glass {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 12px;
             box-shadow: var(--glass-shadow);
@@ -69,8 +59,6 @@
         .logo-area { display: flex; flex-direction: column; gap: 5px; color: var(--primary); margin-bottom: 2rem; }
         .logo-title { font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .logo-subtitle { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
-        .logo-link { font-size: 0.75rem; color: var(--text-color); opacity: 0.7; text-decoration: none; }
-        .logo-link:hover { text-decoration: underline; color: var(--primary); }
 
         .nav-btn {
             display: flex; align-items: center; gap: 12px; padding: 0.8rem 1rem; border: none;
@@ -85,70 +73,67 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Dashboard & Components */
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; border-left: 4px solid var(--primary); }
         .stat-card.accent { border-left-color: var(--accent); }
         .stat-card.success { border-left-color: var(--success); }
+        .stat-card.warning { border-left-color: #e67e22; }
         .stat-icon { width: 50px; height: 50px; border-radius: 10px; background: rgba(0,75,135,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary); }
-        .stat-info h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; margin-bottom: 0.2rem; }
-        .stat-info .value { font-size: 1.8rem; font-weight: 700; }
+        .stat-info h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; margin-bottom: 0.2rem; }
+        .stat-info .value { font-size: 1.6rem; font-weight: 700; }
 
-        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .chart-container { padding: 1.5rem; min-height: 320px; }
-
-        /* Maps & UI Modules */
-        #map { height: 400px; width: 100%; border-radius: 8px; margin-top: 1rem; z-index: 1; border: 1px solid var(--glass-border); }
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary); }
+        .dashboard-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+        .list-card { padding: 1.5rem; max-height: 350px; overflow-y: auto; }
+        .list-card h3 { color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; }
+        .list-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
 
         /* Forms & Tables */
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem; }
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-        label { font-weight: 600; font-size: 0.85rem; opacity: 0.9; color: var(--primary); }
-        [data-theme="dark"] label { color: var(--accent); }
+        label { font-weight: 600; font-size: 0.85rem; color: var(--primary); }
         input, select, textarea {
             padding: 0.8rem 1rem; border: 1px solid var(--glass-border); border-radius: 6px;
             background: rgba(255, 255, 255, 0.8); color: var(--text-color); font-size: 0.95rem; outline: none; transition: var(--transition);
         }
-        [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: rgba(13, 27, 42, 0.6); }
         input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 75, 135, 0.15); }
         
+        .radio-group { display: flex; gap: 1.5rem; padding: 0.5rem 0; }
+        .radio-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-color); font-size: 0.95rem; font-weight: 500; }
+        .radio-group input[type="radio"] { transform: scale(1.2); cursor: pointer; }
+
         .btn {
             padding: 0.8rem 1.5rem; border: none; border-radius: 6px; background: var(--primary);
             color: white; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: var(--transition);
         }
         .btn:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #a93226; }
         .btn-accent { background: var(--accent); color: #000; }
         .btn-accent:hover { background: #d49400; }
 
         .table-container { overflow-x: auto; margin-top: 1rem; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; }
         th { font-weight: 600; background: rgba(0,75,135,0.05); color: var(--primary); }
-        [data-theme="dark"] th { color: var(--accent); }
 
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
         
-        /* Badges & Modals */
-        .badge { padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; display: inline-block; }
-        .badge-success { background: rgba(39, 174, 96, 0.15); color: var(--success); border: 1px solid rgba(39, 174, 96, 0.3); }
-        .badge-pending { background: rgba(192, 57, 43, 0.15); color: var(--danger); border: 1px solid rgba(192, 57, 43, 0.3); }
+        .badge { padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-success { background: rgba(39, 174, 96, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(230, 126, 34, 0.15); color: #d35400; }
 
-        #badge-modal {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: var(--transition);
+        /* Print Optimization */
+        @media print {
+            #sidebar, .header-flex button, .search-bar { display: none !important; }
+            #main-content { padding: 0; }
+            .glass { border: none; box-shadow: none; }
         }
-        #badge-modal.active { opacity: 1; pointer-events: auto; }
-        .badge-card { width: 380px; padding: 2.5rem; text-align: center; background: white; border-radius: 16px; color: #2c3e50; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border-top: 6px solid var(--primary); }
-        .badge-qr { display: flex; justify-content: center; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
             #sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 1rem; }
             .logo-area { display: none; }
             #main-content { padding: 1rem; }
-            .nav-btn span { display: none; } /* Icon only on mobile nav */
+            .nav-btn span { display: none; } 
+            .dashboard-lists { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -158,15 +143,11 @@
     <nav id="sidebar">
         <div class="logo-area">
             <div class="logo-title"><i class="fa-solid fa-church"></i> Cape Conference</div>
-            <div class="logo-subtitle">Event Registration</div>
-            <a href="https://cc.adventist.org" target="_blank" class="logo-link"><i class="fa-solid fa-globe"></i> cc.adventist.org</a>
+            <div class="logo-subtitle">Event Ticketing</div>
         </div>
         <button class="nav-btn active" onclick="App.ui.navigate('dashboard')"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard Analysis</span></button>
         <button class="nav-btn" onclick="App.ui.navigate('register')"><i class="fa-solid fa-user-plus"></i> <span>New Registration</span></button>
-        <button class="nav-btn" onclick="App.ui.navigate('scan')"><i class="fa-solid fa-qrcode"></i> <span>QR Check-In</span></button>
         <button class="nav-btn" onclick="App.ui.navigate('directory')"><i class="fa-solid fa-address-book"></i> <span>Master Directory</span></button>
-        <button class="nav-btn" onclick="App.ui.navigate('venue')"><i class="fa-solid fa-map-location-dot"></i> <span>Cape Venue Map</span></button>
-        <button class="nav-btn" style="margin-top: auto;" onclick="App.ui.toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> <span>Toggle Theme</span></button>
     </nav>
 
     <!-- CONTENT DISPLAY LAYER -->
@@ -176,115 +157,120 @@
         <section id="dashboard" class="view-section active">
             <div class="header-flex">
                 <div>
-                    <h2 style="color: var(--primary); margin-bottom: 0;">Conference Analytics</h2>
-                    <p style="font-size: 0.9rem; opacity: 0.8;">Real-time data visualization across the Cape territory.</p>
+                    <h2 style="color: var(--primary); margin-bottom: 0;">System Overview</h2>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">Automated Event Ticketing & Distribution</p>
                 </div>
-                <button class="btn btn-accent" onclick="App.logic.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Export CSV/Excel Report</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-accent" onclick="App.logic.exportToExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+                    <button class="btn" onclick="App.logic.exportDirectoryPDF()"><i class="fa-solid fa-file-pdf"></i> Export PDF List</button>
+                </div>
             </div>
             
             <div class="stat-grid">
                 <div class="glass stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                    <div class="stat-info"><h3>Total Delegates</h3><div class="value" id="dash-total">0</div></div>
+                    <div class="stat-info"><h3>Total Registrations</h3><div class="value" id="dash-total">0</div></div>
                 </div>
                 <div class="glass stat-card success">
-                    <div class="stat-icon" style="color:var(--success);"><i class="fa-solid fa-user-check"></i></div>
-                    <div class="stat-info"><h3>Checked In</h3><div class="value" id="dash-checked">0</div></div>
+                    <div class="stat-icon" style="color:var(--success);"><i class="fa-brands fa-whatsapp"></i></div>
+                    <div class="stat-info"><h3>WhatsApp Sent</h3><div class="value" id="dash-wa">0</div></div>
                 </div>
-                <div class="glass stat-card accent">
-                    <div class="stat-icon" style="color:var(--accent);"><i class="fa-solid fa-campground"></i></div>
-                    <div class="stat-info"><h3>Pathfinders & Youth</h3><div class="value" id="dash-youth">0</div></div>
+                <div class="glass stat-card success">
+                    <div class="stat-icon" style="color:var(--success);"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="stat-info"><h3>Emails Sent</h3><div class="value" id="dash-email">0</div></div>
+                </div>
+                <div class="glass stat-card warning">
+                    <div class="stat-icon" style="color:#e67e22;"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="stat-info"><h3>Pending Delivery</h3><div class="value" id="dash-pending">0</div></div>
                 </div>
             </div>
 
-            <div class="chart-grid">
-                <div class="glass chart-container"><canvas id="regionChart"></canvas></div>
-                <div class="glass chart-container"><canvas id="deptChart"></canvas></div>
+            <div class="dashboard-lists">
+                <div class="glass list-card">
+                    <h3>Registrations by District</h3>
+                    <div id="list-districts"></div>
+                </div>
+                <div class="glass list-card">
+                    <h3>Registrations by Church</h3>
+                    <div id="list-churches"></div>
+                </div>
             </div>
         </section>
 
         <!-- MODULE 2: REGISTRATION ENGINE -->
         <section id="register" class="view-section">
-            <h2>Delegate Registration</h2>
+            <h2>Attendee Registration & Ticketing</h2>
             <div class="glass" style="padding: 2rem; margin-top: 1rem; border-top: 4px solid var(--primary);">
                 <form id="reg-form" onsubmit="App.logic.executeRegistration(event)">
+                    
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--secondary);">Personal Details</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Full Name *</label><input type="text" id="form-name" required></div>
-                        <div class="form-group"><label>ID / Passport Number *</label><input type="text" id="form-id" required></div>
-                        <div class="form-group"><label>Mobile Number *</label><input type="tel" id="form-phone" required></div>
-                        <div class="form-group"><label>Email Address</label><input type="email" id="form-email"></div>
-                        
                         <div class="form-group">
-                            <label>Conference Region / District *</label>
-                            <select id="form-region" required>
-                                <option value="">Select Region...</option>
-                                <option value="Cape Peninsula">Cape Peninsula</option>
-                                <option value="Boland / Overberg">Boland / Overberg</option>
-                                <option value="Southern Cape">Southern Cape</option>
-                                <option value="Karoo">Karoo</option>
-                                <option value="West Coast">West Coast</option>
-                                <option value="Northern Cape">Northern Cape</option>
-                                <option value="Eastern Cape (CC Territory)">Eastern Cape (CC Territory)</option>
-                                <option value="Other / Out of Conference">Other / Out of Conference</option>
+                            <label>Gender *</label>
+                            <select id="form-gender" required>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
                             </select>
                         </div>
-                        
-                        <div class="form-group"><label>Local Church *</label><input type="text" id="form-church" required placeholder="e.g. Helderberg, Goodwood, Kimberley"></div>
-                        
-                        <div class="form-group">
-                            <label>Primary Department *</label>
-                            <select id="form-dept" required>
-                                <option value="General Member">General Member</option>
-                                <option value="Youth Ministries">Youth Ministries (AY)</option>
-                                <option value="Pathfinders / Adventurers">Pathfinders / Adventurers</option>
-                                <option value="Women's Ministries">Women's Ministries</option>
-                                <option value="Sabbath School">Sabbath School</option>
-                                <option value="Personal Ministries">Personal Ministries</option>
-                                <option value="Health Ministries">Health Ministries</option>
-                                <option value="Elders / Pastoral">Elders / Pastoral</option>
-                            </select>
-                        </div>
+                        <div class="form-group"><label>Age *</label><input type="number" id="form-age" min="1" max="120" required></div>
+                    </div>
 
+                    <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem; color: var(--secondary);">Contact & Delivery</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Phone / WhatsApp Number *</label><input type="tel" id="form-phone" required placeholder="+27..."></div>
+                        <div class="form-group"><label>Email Address *</label><input type="email" id="form-email" required></div>
                         <div class="form-group">
-                            <label>Dietary Requirements</label>
-                            <select id="form-diet">
-                                <option value="Standard">Standard (Omnivore)</option>
-                                <option value="Vegetarian">Vegetarian (Standard SDA)</option>
-                                <option value="Vegan">Vegan (Total Plant-Based)</option>
-                                <option value="Gluten-Free">Gluten-Free</option>
+                            <label>Ticket Delivery Method *</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="delivery" value="WhatsApp" required> WhatsApp</label>
+                                <label><input type="radio" name="delivery" value="Email" required> Email</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem; color: var(--secondary);">Church Ecosystem</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Cape Conference District *</label>
+                            <select id="form-district" required onchange="App.ui.populateChurches()">
+                                <option value="">Select Official District...</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Local Church *</label>
+                            <select id="form-church" required>
+                                <option value="">Select District First...</option>
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 1rem; padding: 1rem;"><i class="fa-solid fa-id-badge"></i> Process Delegate & Generate Digital Credential</button>
+
+                    <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 2rem; padding: 1.2rem; font-size: 1.1rem;">
+                        <i class="fa-solid fa-file-pdf"></i> Generate PDF Ticket & Complete Registration
+                    </button>
                 </form>
             </div>
         </section>
 
-        <!-- MODULE 3: CAMERA SCANNING SYSTEM -->
-        <section id="scan" class="view-section">
-            <h2>Access Control & Verification</h2>
-            <p style="margin-bottom: 1.5rem;">Utilize device camera to scan Cape Conference digital badges for instant check-in.</p>
-            <div class="glass" style="padding: 2rem; text-align: center; background: #000;">
-                <div id="reader"></div>
-            </div>
-        </section>
-
-        <!-- MODULE 4: MASTER DATABASE DIRECTORY -->
+        <!-- MODULE 3: MASTER DATABASE DIRECTORY -->
         <section id="directory" class="view-section">
             <div class="header-flex">
                 <h2>Delegate Directory</h2>
-                <input type="text" class="glass" id="dir-search" placeholder="Search by name, church, or region..." style="width:350px;" onkeyup="App.logic.filterDirectory(this.value)">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="glass search-bar" id="dir-search" placeholder="Search name, Reg ID, Phone..." style="width:300px; padding: 0.6rem 1rem;" onkeyup="App.logic.filterDirectory(this.value)">
+                    <button class="btn btn-accent" onclick="window.print()"><i class="fa-solid fa-print"></i> Print List</button>
+                </div>
             </div>
             <div class="glass table-container">
-                <table>
+                <table id="directory-table">
                     <thead>
                         <tr>
-                            <th>Reg ID</th>
-                            <th>Delegate Name</th>
-                            <th>Local Church</th>
-                            <th>Region</th>
-                            <th>Department</th>
-                            <th>Status</th>
+                            <th>Reg Number</th>
+                            <th>Ticket #</th>
+                            <th>Full Name</th>
+                            <th>Church (District)</th>
+                            <th>Delivery Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -292,60 +278,78 @@
                 </table>
             </div>
         </section>
-
-        <!-- MODULE 5: GEOSPATIAL MAPS -->
-        <section id="venue" class="view-section">
-            <h2>Cape Conference Territory Mapping</h2>
-            <p>Geospatial configuration centered on the Cape region. Click to pin event coordinates.</p>
-            <div class="glass" style="padding: 1rem; margin-top: 1rem;">
-                <div id="map"></div>
-                <div style="margin-top: 1rem; font-family: monospace; font-weight: bold; color: var(--primary);" id="geo-coords">Event Coordinates: Latitude -33.9249, Longitude 18.4241 (Cape Town - Default)</div>
-            </div>
-        </section>
-
     </main>
-
-    <!-- DIGITAL BADGE OVERLAY MODAL -->
-    <div id="badge-modal" onclick="App.ui.closeBadge()">
-        <div class="badge-card" onclick="event.stopPropagation()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/SDA_Logo.svg/512px-SDA_Logo.svg.png" alt="SDA Logo" style="width: 60px; margin-bottom: 1rem; opacity: 0.9;">
-            <h2 id="modal-name" style="color: #004b87; margin-bottom: 0.2rem;">Delegate Name</h2>
-            <p id="modal-church" style="color: #666; font-weight: 600; font-size: 0.95rem;">Local Church</p>
-            <p id="modal-region" style="color: #f2a900; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;">Region</p>
-            
-            <div class="badge-qr" id="qrcode-target"></div>
-            
-            <div id="modal-id" style="font-weight: 800; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; color: #333; margin-bottom: 1.5rem;">CC-ID</div>
-            <button class="btn" style="width: 100%; justify-content: center;" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Badge</button>
-            <button class="btn btn-danger" style="width: 100%; justify-content: center; margin-top: 0.5rem;" onclick="App.ui.closeBadge()">Close Panel</button>
-        </div>
-    </div>
 
     <!-- =========================================
        APPLICATION LOGIC INFRASTRUCTURE
        ========================================= -->
     <script>
+        /**
+         * Authoritative Cape Conference Districts & Placeholder Local Churches
+         * Mapped according to SDA organizational structure.
+         */
+        const CC_DATA = {
+            "Western Region - Northern Peninsula": ["Goodwood SDA", "Belhar SDA", "Bellville SDA", "Parow SDA", "Elsies River SDA"],
+            "Western Region - Southern Suburbs": ["Claremont SDA", "Plumstead SDA", "Wynberg SDA", "Athlone SDA"],
+            "Western Region - Helderberg": ["Helderberg College Church", "Somerset West SDA", "Strand SDA", "Macassar SDA"],
+            "Eastern Region - Motherwell": ["Motherwell Central SDA", "KwaZakhele SDA", "New Brighton SDA", "Zwide SDA"],
+            "Eastern Region - East London": ["East London Central", "Mdantsane SDA", "Ginsberg SDA"],
+            "Eastern Region - Karoo": ["Beaufort West SDA", "Graaff-Reinet SDA", "Victoria West SDA"],
+            "Northern Cape - Kimberley": ["Beaconsfield SDA (Historic)", "Kimberley Central", "Galeshewe SDA", "Roodepan SDA"]
+        };
+
         const App = {
             state: {
-                dbKey: 'cape_conference_event_db',
-                charts: {},
-                mapInstance: null,
-                qrScannerInstance: null
+                dbKey: 'cc_ticketing_db',
+                eventDetails: {
+                    name: "Cape Conference Event 2026",
+                    date: "15 August 2026",
+                    venue: "Good Hope Center, Cape Town"
+                }
             },
 
             // Native Persistent Data Engine
             db: {
                 fetch: () => JSON.parse(localStorage.getItem(App.state.dbKey)) || [],
                 commit: (payload) => localStorage.setItem(App.state.dbKey, JSON.stringify(payload)),
+                
+                generateRegNumber: () => {
+                    const store = App.db.fetch();
+                    const count = store.length + 1;
+                    return "AA2026-" + String(count).padStart(6, '0');
+                },
+
+                generateTicketNumber: () => {
+                    return "TKT-" + Math.floor(10000000 + Math.random() * 90000000);
+                },
+
                 insert: (record) => {
                     const store = App.db.fetch();
-                    // Generate Cape Conference specific ID
-                    record.id = 'CC-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
-                    record.checkedIn = false;
-                    record.timestamp = new Date().toISOString();
+                    
+                    // Duplicate Validation (Phone or Email)
+                    const duplicate = store.find(r => r.phone === record.phone || r.email === record.email);
+                    if (duplicate) {
+                        alert(`Validation Blocked: The phone number or email provided is already associated with Registration Number: ${duplicate.regNumber}`);
+                        return false;
+                    }
+
+                    record.regNumber = App.db.generateRegNumber();
+                    record.ticketNumber = App.db.generateTicketNumber();
+                    record.dateRegistered = new Date().toLocaleDateString('en-ZA');
+                    record.deliveryStatus = 'Pending';
+                    
                     store.push(record);
                     App.db.commit(store);
                     return record;
+                },
+
+                updateStatus: (regNumber, newStatus) => {
+                    const store = App.db.fetch();
+                    const idx = store.findIndex(r => r.regNumber === regNumber);
+                    if(idx > -1) {
+                        store[idx].deliveryStatus = newStatus;
+                        App.db.commit(store);
+                    }
                 }
             },
 
@@ -358,212 +362,298 @@
                     event.currentTarget.classList.add('active');
                     document.getElementById(targetSection).classList.add('active');
 
-                    // Stop camera scanning modules if exiting verification panel
-                    if (targetSection !== 'scan' && App.state.qrScannerInstance) {
-                        try { App.state.qrScannerInstance.clear(); } catch(e) { console.warn("Scanner shutdown sequence bypassed."); }
-                    }
-
-                    // Module Lifecycles
-                    if (targetSection === 'dashboard') App.logic.initializeAnalytics();
-                    if (targetSection === 'venue') App.logic.initializeGeospatialMap();
-                    if (targetSection === 'scan') App.logic.initializeScanner();
+                    if (targetSection === 'dashboard') App.logic.refreshDashboard();
                     if (targetSection === 'directory') App.logic.filterDirectory('');
                 },
 
-                toggleTheme: () => {
-                    const layout = document.documentElement;
-                    layout.getAttribute('data-theme') === 'dark' ? layout.removeAttribute('data-theme') : layout.setAttribute('data-theme', 'dark');
-                    if (document.getElementById('dashboard').classList.contains('active')) App.logic.initializeAnalytics();
+                initDistricts: () => {
+                    const distSelect = document.getElementById('form-district');
+                    Object.keys(CC_DATA).forEach(district => {
+                        distSelect.innerHTML += `<option value="${district}">${district}</option>`;
+                    });
                 },
 
-                displayBadge: (attendee) => {
-                    document.getElementById('modal-name').innerText = attendee.name;
-                    document.getElementById('modal-church').innerText = attendee.church;
-                    document.getElementById('modal-region').innerText = attendee.region;
-                    document.getElementById('modal-id').innerText = attendee.id;
+                populateChurches: () => {
+                    const district = document.getElementById('form-district').value;
+                    const churchSelect = document.getElementById('form-church');
+                    churchSelect.innerHTML = '<option value="">Select Church...</option>';
                     
-                    const container = document.getElementById('qrcode-target');
-                    container.innerHTML = '';
-                    new QRCode(container, { text: attendee.id, width: 180, height: 180, colorDark: "#004b87", colorLight: "#ffffff" });
-                    
-                    document.getElementById('badge-modal').classList.add('active');
+                    if(CC_DATA[district]) {
+                        CC_DATA[district].forEach(church => {
+                            churchSelect.innerHTML += `<option value="${church}">${church}</option>`;
+                        });
+                    }
+                }
+            },
+
+            // External Communications Integration Mock Layer
+            api: {
+                // Twilio WhatsApp API Implementation Template
+                sendWhatsApp: async (attendee, pdfBlobBase64) => {
+                    /* PRODUCTION TWILIO IMPLEMENTATION:
+                       const TWILIO_SID = 'YOUR_SID';
+                       const TWILIO_AUTH = 'YOUR_AUTH';
+                       const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`;
+                       // Form data with To, From, Body, and MediaUrl (pointing to hosted PDF)
+                    */
+                    console.log(`[API MOCK] Connecting to WhatsApp Business API for ${attendee.phone}...`);
+                    return new Promise(resolve => setTimeout(() => resolve(true), 1500));
                 },
 
-                closeBadge: () => document.getElementById('badge-modal').classList.remove('active')
+                // EmailJS API Implementation Template
+                sendEmail: async (attendee, pdfBlobBase64) => {
+                    /* PRODUCTION EMAILJS IMPLEMENTATION:
+                       emailjs.init("YOUR_PUBLIC_KEY");
+                       const templateParams = {
+                           to_email: attendee.email,
+                           to_name: attendee.name,
+                           ticket_number: attendee.ticketNumber,
+                           attachment: pdfBlobBase64 // Requires specific EmailJS setup for attachments
+                       };
+                       await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
+                    */
+                    console.log(`[API MOCK] Connecting to SMTP Relay for ${attendee.email}...`);
+                    return new Promise(resolve => setTimeout(() => resolve(true), 1500));
+                }
             },
 
             // Core Logic Systems
             logic: {
-                executeRegistration: (e) => {
+                executeRegistration: async (e) => {
                     e.preventDefault();
+                    
+                    // 1. Gather Data
                     const profile = {
                         name: document.getElementById('form-name').value,
-                        idNumber: document.getElementById('form-id').value,
+                        gender: document.getElementById('form-gender').value,
+                        age: document.getElementById('form-age').value,
                         phone: document.getElementById('form-phone').value,
                         email: document.getElementById('form-email').value,
-                        region: document.getElementById('form-region').value,
-                        church: document.getElementById('form-church').value,
-                        dept: document.getElementById('form-dept').value,
-                        diet: document.getElementById('form-diet').value
+                        deliveryMethod: document.querySelector('input[name="delivery"]:checked').value,
+                        district: document.getElementById('form-district').value,
+                        church: document.getElementById('form-church').value
                     };
-                    const processedRecord = App.db.insert(profile);
-                    e.target.reset();
-                    App.ui.displayBadge(processedRecord);
-                },
 
-                initializeAnalytics: () => {
-                    const dataset = App.db.fetch();
+                    // 2. Validate & Store
+                    const savedRecord = App.db.insert(profile);
+                    if (!savedRecord) return; // Blocked by duplicate check
+
+                    // 3. UI Loading State
+                    const btn = document.querySelector('button[type="submit"]');
+                    const ogText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF & Contacting APIs...`;
+                    btn.disabled = true;
+
+                    // 4. Generate PDF natively
+                    const pdfDoc = App.logic.generatePDFTicket(savedRecord);
+                    const pdfBlobURI = pdfDoc.output('datauristring'); // For API attachments
                     
-                    // Direct Metrics Breakdown
-                    const total = dataset.length;
-                    const checked = dataset.filter(x => x.checkedIn).length;
-                    const youthPathfinders = dataset.filter(x => x.dept.includes('Youth') || x.dept.includes('Pathfinder')).length;
+                    // 5. Download PDF to local machine instantly
+                    pdfDoc.save(`Ticket_${savedRecord.regNumber}.pdf`);
 
-                    document.getElementById('dash-total').innerText = total;
-                    document.getElementById('dash-checked').innerText = checked;
-                    document.getElementById('dash-youth').innerText = youthPathfinders;
-
-                    // Data Metrics Pipelines
-                    const regionClusters = {};
-                    const deptClusters = {};
-                    
-                    dataset.forEach(x => { 
-                        regionClusters[x.region] = (regionClusters[x.region] || 0) + 1; 
-                        deptClusters[x.dept] = (deptClusters[x.dept] || 0) + 1;
-                    });
-
-                    // Destroy old charting instances
-                    if(App.state.charts.region) App.state.charts.region.destroy();
-                    if(App.state.charts.dept) App.state.charts.dept.destroy();
-
-                    const textCol = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-                    const sdaBlue = '#004b87';
-                    const sdaGold = '#f2a900';
-                    const palette = [sdaBlue, sdaGold, '#27ae60', '#8e44ad', '#e74c3c', '#16a085'];
-
-                    App.state.charts.region = new Chart(document.getElementById('regionChart').getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(regionClusters),
-                            datasets: [{ data: Object.values(regionClusters), backgroundColor: palette, borderWidth: 0 }]
-                        },
-                        options: { plugins: { title: { display: true, text: 'Attendance by Conference Region', color: textCol, font: {size: 16} } }, cutout: '60%' }
-                    });
-
-                    App.state.charts.dept = new Chart(document.getElementById('deptChart').getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: Object.keys(deptClusters),
-                            datasets: [{ label: 'Delegates', data: Object.values(deptClusters), backgroundColor: sdaBlue, borderRadius: 4 }]
-                        },
-                        options: { 
-                            plugins: { title: { display: true, text: 'Departmental Distribution', color: textCol, font: {size: 16} }, legend: { display: false } },
-                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                        }
-                    });
-                },
-
-                initializeScanner: () => {
-                    App.state.qrScannerInstance = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                    App.state.qrScannerInstance.render((decodedText) => {
-                        const store = App.db.fetch();
-                        const match = store.find(x => x.id === decodedText);
-                        
-                        if(match) {
-                            if(match.checkedIn) {
-                                alert(`Security Exception: Delegate ${match.name} (${match.id}) is already checked in.`);
-                            } else {
-                                match.checkedIn = true;
-                                App.db.commit(store);
-                                alert(`Access Granted: Welcome ${match.name} from ${match.church}!`);
-                            }
+                    // 6. Execute Delivery Integrations
+                    let apiSuccess = false;
+                    try {
+                        if (savedRecord.deliveryMethod === 'WhatsApp') {
+                            apiSuccess = await App.api.sendWhatsApp(savedRecord, pdfBlobURI);
                         } else {
-                            alert("Verification Failure: Unknown credential sequence mapping.");
+                            apiSuccess = await App.api.sendEmail(savedRecord, pdfBlobURI);
                         }
-                    });
+
+                        if (apiSuccess) {
+                            App.db.updateStatus(savedRecord.regNumber, `Sent (${savedRecord.deliveryMethod})`);
+                        }
+                    } catch (error) {
+                        console.error("API Delivery Failed", error);
+                        App.db.updateStatus(savedRecord.regNumber, 'Failed to Send');
+                    }
+
+                    // 7. Reset Form & State
+                    e.target.reset();
+                    btn.innerHTML = ogText;
+                    btn.disabled = false;
+                    alert(`Success! Registration ${savedRecord.regNumber} completed.\nPDF has been downloaded and delivered via ${savedRecord.deliveryMethod}.`);
                 },
 
-                initializeGeospatialMap: () => {
-                    if (App.state.mapInstance) return; 
-                    
-                    // Centered on Cape Town, South Africa (Cape Conference Headquarters Region)
-                    App.state.mapInstance = L.map('map').setView([-33.9249, 18.4241], 7);
-                    
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }).addTo(App.state.mapInstance);
+                generatePDFTicket: (record) => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
 
-                    // Add a default marker for Cape Conference territory context
-                    L.marker([-33.9249, 18.4241]).addTo(App.state.mapInstance)
-                        .bindPopup('<b>Cape Region</b><br>CC Territory Centerpoint.')
-                        .openPopup();
+                    // Blue Header Banner
+                    doc.setFillColor(0, 75, 135); // SDA Blue
+                    doc.rect(0, 0, 148, 40, 'F');
+                    
+                    // Header Text
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(16);
+                    doc.text("CAPE CONFERENCE OF", 74, 18, { align: "center" });
+                    doc.setFontSize(14);
+                    doc.text("SEVENTH-DAY ADVENTISTS", 74, 25, { align: "center" });
+                    
+                    // Event Sub-banner
+                    doc.setFillColor(242, 169, 0); // SDA Gold
+                    doc.rect(0, 40, 148, 10, 'F');
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(12);
+                    doc.text(App.state.eventDetails.name.toUpperCase(), 74, 47, { align: "center" });
 
-                    App.state.mapInstance.on('click', (e) => {
-                        document.getElementById('geo-coords').innerText = `Event Coordinates: Latitude ${e.latlng.lat.toFixed(4)}, Longitude ${e.latlng.lng.toFixed(4)}`;
+                    // Attendee Name (Hero)
+                    doc.setTextColor(0, 75, 135);
+                    doc.setFontSize(20);
+                    doc.text(record.name.toUpperCase(), 74, 70, { align: "center" });
+                    
+                    // Divider Line
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(15, 75, 133, 75);
+
+                    // Details Grid
+                    doc.setTextColor(50, 50, 50);
+                    doc.setFontSize(10);
+                    
+                    const startY = 85;
+                    const lineSpacing = 8;
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Registration No:", 15, startY);
+                    doc.text("Ticket Number:", 15, startY + lineSpacing);
+                    doc.text("Status:", 15, startY + lineSpacing*2);
+                    doc.text("Church / District:", 15, startY + lineSpacing*3);
+                    doc.text("Contact:", 15, startY + lineSpacing*4);
+
+                    doc.setFont("helvetica", "normal");
+                    doc.text(record.regNumber, 55, startY);
+                    doc.text(record.ticketNumber, 55, startY + lineSpacing);
+                    doc.setTextColor(39, 174, 96); // Green
+                    doc.text("CONFIRMED", 55, startY + lineSpacing*2);
+                    doc.setTextColor(50, 50, 50);
+                    doc.text(`${record.church} (${record.district.split(' - ')[0]})`, 55, startY + lineSpacing*3);
+                    doc.text(`${record.phone} | ${record.email}`, 55, startY + lineSpacing*4);
+
+                    // Event Details Section
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(15, 125, 118, 30, 'F');
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Event Details:", 20, 133);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`Date: ${App.state.eventDetails.date}`, 20, 141);
+                    doc.text(`Venue: ${App.state.eventDetails.venue}`, 20, 149);
+
+                    // Footer
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text("This ticket is digitally generated. Please present at the venue.", 74, 200, { align: "center" });
+
+                    return doc;
+                },
+
+                refreshDashboard: () => {
+                    const store = App.db.fetch();
+                    
+                    document.getElementById('dash-total').innerText = store.length;
+                    document.getElementById('dash-wa').innerText = store.filter(r => r.deliveryStatus.includes('WhatsApp')).length;
+                    document.getElementById('dash-email').innerText = store.filter(r => r.deliveryStatus.includes('Email')).length;
+                    document.getElementById('dash-pending').innerText = store.filter(r => r.deliveryStatus === 'Pending').length;
+
+                    // Aggregate lists
+                    const distCount = {};
+                    const churchCount = {};
+                    store.forEach(r => {
+                        distCount[r.district] = (distCount[r.district] || 0) + 1;
+                        churchCount[r.church] = (churchCount[r.church] || 0) + 1;
                     });
+
+                    document.getElementById('list-districts').innerHTML = Object.keys(distCount)
+                        .map(k => `<div class="list-item"><span>${k}</span> <strong>${distCount[k]}</strong></div>`).join('');
+                        
+                    document.getElementById('list-churches').innerHTML = Object.keys(churchCount)
+                        .map(k => `<div class="list-item"><span>${k}</span> <strong>${churchCount[k]}</strong></div>`).join('');
                 },
 
                 filterDirectory: (filterStr) => {
                     const dataset = App.db.fetch();
                     const outputTarget = document.getElementById('directory-table-body');
                     outputTarget.innerHTML = '';
+                    const term = filterStr.toLowerCase();
 
                     const filtered = dataset.filter(x => 
-                        x.name.toLowerCase().includes(filterStr.toLowerCase()) || 
-                        x.id.toLowerCase().includes(filterStr.toLowerCase()) ||
-                        x.church.toLowerCase().includes(filterStr.toLowerCase()) ||
-                        x.region.toLowerCase().includes(filterStr.toLowerCase())
+                        x.name.toLowerCase().includes(term) || 
+                        x.regNumber.toLowerCase().includes(term) ||
+                        x.phone.toLowerCase().includes(term) ||
+                        x.church.toLowerCase().includes(term)
                     );
 
                     filtered.forEach(item => {
                         const tr = document.createElement('tr');
+                        const statusClass = item.deliveryStatus.includes('Sent') ? 'badge-success' : 'badge-warning';
                         tr.innerHTML = `
-                            <td style="font-family: monospace; font-weight: bold; color: var(--primary);">${item.id}</td>
+                            <td style="font-family: monospace; font-weight: bold; color: var(--primary);">${item.regNumber}</td>
+                            <td style="font-size: 0.85rem; color: #555;">${item.ticketNumber}</td>
                             <td style="font-weight: 600;">${item.name}</td>
-                            <td>${item.church}</td>
-                            <td>${item.region}</td>
-                            <td>${item.dept}</td>
-                            <td><span class="badge ${item.checkedIn ? 'badge-success' : 'badge-pending'}">${item.checkedIn ? 'Inside' : 'Pending'}</span></td>
-                            <td style="display: flex; gap: 5px;">
-                                <button class="btn" style="padding:0.4rem 0.6rem; font-size:0.8rem;" onclick="App.logic.toggleDirectCheckin('${item.id}')"><i class="fa-solid fa-check-double"></i></button>
-                                <button class="btn btn-accent" style="padding:0.4rem 0.6rem; font-size:0.8rem;" onclick="App.logic.launchSpecificBadge('${item.id}')"><i class="fa-solid fa-id-card"></i></button>
+                            <td>${item.church}<br><small style="color:#777;">${item.district}</small></td>
+                            <td><span class="badge ${statusClass}">${item.deliveryStatus}</span></td>
+                            <td>
+                                <button class="btn btn-accent" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="App.logic.reDownloadTicket('${item.regNumber}')">
+                                    <i class="fa-solid fa-download"></i> PDF
+                                </button>
                             </td>
                         `;
                         outputTarget.appendChild(tr);
                     });
                 },
 
-                toggleDirectCheckin: (id) => {
-                    const store = App.db.fetch();
-                    const index = store.findIndex(x => x.id === id);
-                    if(index > -1) {
-                        store[index].checkedIn = !store[index].checkedIn;
-                        App.db.commit(store);
-                        App.logic.filterDirectory(document.getElementById('dir-search').value);
+                reDownloadTicket: (regNumber) => {
+                    const item = App.db.fetch().find(x => x.regNumber === regNumber);
+                    if(item) {
+                        const doc = App.logic.generatePDFTicket(item);
+                        doc.save(`Ticket_${item.regNumber}.pdf`);
                     }
-                },
-
-                launchSpecificBadge: (id) => {
-                    const item = App.db.fetch().find(x => x.id === id);
-                    if(item) App.ui.displayBadge(item);
                 },
 
                 exportToExcel: () => {
                     const dataset = App.db.fetch();
-                    if(dataset.length === 0) return alert("Dataset pipeline currently empty. Register delegates first.");
-                    
+                    if(dataset.length === 0) return alert("No registrations to export.");
                     const worksheet = XLSX.utils.json_to_sheet(dataset);
                     const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Cape Conference Delegates");
-                    XLSX.writeFile(workbook, `Cape_Conference_Event_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+                    XLSX.writeFile(workbook, `Cape_Conference_Registrations.xlsx`);
+                },
+
+                exportDirectoryPDF: () => {
+                    const dataset = App.db.fetch();
+                    if(dataset.length === 0) return alert("No registrations to export.");
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    doc.setFontSize(16);
+                    doc.text("Cape Conference Registration List", 14, 15);
+                    doc.setFontSize(10);
+                    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+                    const tableData = dataset.map(r => [r.regNumber, r.name, r.church, r.phone, r.deliveryMethod]);
+                    
+                    doc.autoTable({
+                        startY: 30,
+                        head: [['Reg #', 'Full Name', 'Church', 'Phone', 'Delivery']],
+                        body: tableData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [0, 75, 135] }
+                    });
+
+                    doc.save("Registration_MasterList.pdf");
                 }
             },
 
             init: () => {
-                App.logic.initializeAnalytics();
+                App.ui.initDistricts();
+                App.logic.refreshDashboard();
             }
         };
 
+        // Boot Application
         window.onload = App.init;
     </script>
 </body>
